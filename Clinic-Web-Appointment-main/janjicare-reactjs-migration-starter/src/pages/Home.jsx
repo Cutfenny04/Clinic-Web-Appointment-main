@@ -19,7 +19,7 @@ export default function Home() {
             <h1>Urus janji kesehatan dengan <span>lebih mudah.</span></h1>
             <p className="hero-description">JanjiCare membantu pasien mengatur janji temu, menemukan dokter, dan memantau informasi kunjungan dalam satu pengalaman yang sederhana.</p>
             <div className="hero-actions">
-              <Link className="button button-primary" to="/janji-temu">Buat Janji Temu <ArrowRight size={18} /></Link>
+              <Link className="button button-primary" to="/janji-temu">Buat Janji Temu  </Link>
               <Link className="button button-ghost" to="/dokter"><Stethoscope size={18} /> Lihat Dokter</Link>
             </div>
             <div className="hero-note"><ShieldCheck size={16} /> Prototype untuk demonstrasi sistem klinik</div>
