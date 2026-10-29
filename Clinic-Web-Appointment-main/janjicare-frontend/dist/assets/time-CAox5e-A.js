@@ -1,0 +1,1 @@
+function a(t){if(!t)return"";try{const s=t.split(":");if(s.length<2)return t;let r=parseInt(s[0],10);const n=parseInt(s[1],10);if(isNaN(r)||isNaN(n))return t;const e=r>=12?"PM":"AM";r=r%12,r=r||12;const u=n<10?`0${n}`:n;return`${r}:${u} ${e}`}catch{return t}}export{a as f};
