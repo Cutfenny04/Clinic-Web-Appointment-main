@@ -39,14 +39,31 @@ export default function QueueTV({ queueData }) {
     }
   };
   useEffect(() => {
-    if (window.Echo) {
-      window.Echo.channel("queue").listen("AppointmentUpdated", (e) => {
-        console.log("Queue update received:", e);
-        router.reload({ only: ["queueData"] });
-      });
-    }
+    // Supabase Realtime subscription untuk pembaruan antrean
+    import("@/lib/supabase").then(({ supabase }) => {
+      const channel = supabase
+        .channel("realtime:queue_tv")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "appointments" },
+          (payload) => {
+            console.log("Realtime queue update received:", payload);
+            if (router?.reload) {
+              router.reload({ only: ["queueData"] });
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    });
+
     const interval = setInterval(() => {
-      router.reload({ only: ["queueData"] });
+      if (router?.reload) {
+        router.reload({ only: ["queueData"] });
+      }
     }, 6e4);
     return () => clearInterval(interval);
   }, []);

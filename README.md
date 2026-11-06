@@ -178,6 +178,50 @@ Clinic Web Appointment System/
     └── tests/               # PHPUnit feature and unit tests (100+ tests)
 ```
 
+---
+
+## 🚀 Quick Start — Node.js & Supabase Stack
+
+### 1. Struktur Project Modern
+```text
+Clinic-Web-Appointment-main/
+├── backend/                 # Node.js + Express 5 Backend (Port 3000)
+├── services/
+│   └── queue-service/       # Queue Microservice (Port 3002)
+├── janjicare-frontend/      # React + TypeScript Frontend (Port 5173)
+├── docs/                    # Architecture & API documentation
+├── clinic-app/              # Legacy Laravel Application (Reference only)
+```
+
+### 2. Konfigurasi Database Supabase
+Jalankan file SQL migration di **Supabase Dashboard > SQL Editor**:
+```sql
+-- File lokasi: backend/sql/01_schema_and_rls.sql
+```
+Migration ini mengaktifkan RLS, trigger profil otomatis, fungsi atomic booking, dan tabel-tabel utama (`profiles`, `doctor_details`, `doctor_schedules`, `appointments`).
+
+### 3. Menjalankan Backend Express (Port 3000)
+```bash
+cd backend
+npm test      # Menjalankan 15 test suite otomatis
+npm run dev   # Menjalankan server di http://localhost:3000
+```
+
+### 4. Menjalankan Queue Microservice (Port 3002)
+```bash
+cd services/queue-service
+npm test      # Menjalankan 8 test suite queue microservice
+npm run dev   # Menjalankan service di http://localhost:3002
+```
+
+### 5. Menjalankan Frontend React (Port 5173)
+```bash
+cd janjicare-frontend
+npm run dev   # Membuka aplikasi di http://localhost:5173
+```
+
+---
+
 ## Contributing
 
 We welcome contributions from the community! Please read our [Contributing Guidelines](CONTRIBUTING.md) to get started. By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
