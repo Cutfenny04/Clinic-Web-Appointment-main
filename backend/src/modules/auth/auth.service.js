@@ -109,10 +109,29 @@ export function getCurrentUserPayload(authUser, profile) {
 /** Terjemahan pesan umum Supabase Auth ke Bahasa Indonesia */
 export function translateAuthError(message = "") {
   const m = message.toLowerCase();
-  if (m.includes("password should be")) return "Kata sandi terlalu lemah. Gunakan minimal 8 karakter.";
-  if (m.includes("invalid email")) return "Format email tidak valid.";
-  if (m.includes("rate limit") || m.includes("too many")) return "Terlalu banyak percobaan. Coba lagi nanti.";
+  // Pesan asli dicatat di terminal backend agar mudah ditelusuri
+  console.warn("[Supabase Auth]", message);
+  if (m.includes("weak") || m.includes("easy to guess") || m.includes("pwned") || m.includes("leaked")) {
+    return "Kata sandi terlalu mudah ditebak (pernah bocor di internet). Gunakan kombinasi huruf, angka, dan simbol, misalnya Klinik#2026.";
+  }
+  if (m.includes("password should contain") || m.includes("characters")) {
+    return "Kata sandi belum memenuhi syarat keamanan: gunakan huruf besar, huruf kecil, angka, dan simbol.";
+  }
+  if (m.includes("password should be") || m.includes("at least")) return "Kata sandi terlalu pendek.";
+  if (m.includes("already registered") || m.includes("already been registered") || m.includes("already exists")) {
+    return "Email sudah terdaftar. Silakan masuk atau gunakan email lain.";
+  }
+  if (m.includes("not authorized")) {
+    return "Supabase hanya boleh mengirim email konfirmasi ke anggota tim project (SMTP bawaan). Matikan 'Confirm email' di Supabase saat pengujian, atau pasang SMTP sendiri.";
+  }
+  if (m.includes("invalid") && m.includes("email")) return "Alamat email ditolak oleh sistem. Gunakan alamat email yang aktif.";
+  if (m.includes("rate limit") || m.includes("too many") || m.includes("security purposes")) {
+    return "Terlalu banyak percobaan pendaftaran. Tunggu beberapa menit lalu coba lagi.";
+  }
+  if (m.includes("sending") && m.includes("email")) {
+    return "Email konfirmasi gagal dikirim oleh Supabase. Matikan 'Confirm email' saat pengujian atau atur SMTP.";
+  }
   if (m.includes("email not confirmed")) return "Email belum dikonfirmasi. Periksa kotak masuk Anda.";
-  if (m.includes("signups not allowed")) return "Pendaftaran sedang ditutup.";
-  return "Permintaan tidak dapat diproses. Periksa kembali data Anda.";
+  if (m.includes("signups not allowed") || m.includes("signup is disabled")) return "Pendaftaran sedang dinonaktifkan di pengaturan Supabase.";
+  return `Pendaftaran ditolak oleh layanan autentikasi: ${message}`;
 }

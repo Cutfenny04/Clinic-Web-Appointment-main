@@ -159,7 +159,7 @@ export default function Appointments({ auth, appointments, medications = [] }) {
     className="px-4 py-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800/50 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 font-bold rounded-xl text-sm transition-all whitespace-nowrap h-11"
   >{filteredAppointments.length > 0 && selectedIds.length === filteredAppointments.length ? "Batal Pilih Semua" : "Pilih Semua"}</button>{selectedIds.length > 0 && <button
     onClick={() => setShowBulkCancelModal(true)}
-    className="px-4 py-2 bg-rose-500 text-white hover:bg-rose-600 font-bold rounded-xl text-sm transition-all whitespace-nowrap h-11 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+    className="px-4 py-2 bg-rose-500 text-white hover:bg-rose-600 font-bold rounded-xl text-sm transition-all whitespace-nowrap h-11 shadow-md"
   >
                                         Batalkan Terpilih ({selectedIds.length})
                                     </button>}<button
@@ -185,7 +185,7 @@ export default function Appointments({ auth, appointments, medications = [] }) {
     /* Table */
   }<div className="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-2xl border border-gray-100 dark:border-slate-700 relative transition-all">{
     /* Patch to cover the scrollbar track gap in the header */
-  }<div className="absolute top-0 right-0 w-[8px] h-[49px] bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 z-20" /><div className="overflow-x-auto h-[calc(100vh-190px)] md:overflow-y-auto custom-scrollbar flex flex-col p-4 md:p-0"><table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700 hidden md:table"><thead className="bg-gray-50/80 dark:bg-slate-800/80 backdrop-blur-md sticky top-0 z-10 ring-1 ring-gray-200 dark:ring-slate-700"><tr>{isBulkMode && <th className="px-6 py-4 text-left w-12" />}<th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider w-12">#</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Rincian Pasien</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Informasi Sesi</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Status</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">No. Antrean</th><th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Tindakan</th></tr></thead><tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">{filteredAppointments.map((appointment, index) => <tr key={appointment.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all ${selectedIds.includes(appointment.id) ? "bg-blue-50/50 dark:bg-blue-900/20" : ""}`}>{isBulkMode && <td className="px-6 py-4 whitespace-nowrap"><input
+  }<div className="absolute top-0 right-0 w-[8px] h-[49px] bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 z-20" /><div className="overflow-x-auto h-[calc(100vh-190px)] md:overflow-y-auto custom-scrollbar flex flex-col p-4 md:p-0"><table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700 hidden md:table"><thead className="bg-gray-50/80 dark:bg-slate-800/80 sticky top-0 z-10 ring-1 ring-gray-200 dark:ring-slate-700"><tr>{isBulkMode && <th className="px-6 py-4 text-left w-12" />}<th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider w-12">#</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Rincian Pasien</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Informasi Sesi</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Status</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">No. Antrean</th><th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Tindakan</th></tr></thead><tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">{filteredAppointments.map((appointment, index) => <tr key={appointment.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all ${selectedIds.includes(appointment.id) ? "bg-blue-50/50 dark:bg-blue-900/20" : ""}`}>{isBulkMode && <td className="px-6 py-4 whitespace-nowrap"><input
     type="checkbox"
     className="rounded border-gray-300 dark:border-gray-600 dark:bg-slate-700 text-blue-600 shadow-sm focus:ring-blue-500 cursor-pointer"
     checked={selectedIds.includes(appointment.id)}
@@ -201,30 +201,30 @@ export default function Appointments({ auth, appointments, medications = [] }) {
       setShowPatientModal(true);
     }}
     title="Lihat Rincian Pasien"
-    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 p-2 rounded-xl transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 p-2 rounded-xl transition-all cursor-pointer shadow-sm active:scale-95"
   ><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg></button>{!!appointment.checked_in && (appointment.status === "confirmed" || appointment.status === "in_progress") && <button
     onClick={() => {
       setSelectedAptForVitals(appointment);
     }}
     title="Catat Tanda Vital"
-    className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 p-2 rounded-xl transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+    className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 p-2 rounded-xl transition-all cursor-pointer shadow-sm active:scale-95"
   ><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg></button>}{!!appointment.checked_in && appointment.status === "confirmed" && <Link
     href={route("doctor.appointments.call", appointment.id)}
     method="patch"
     as="button"
     preserveScroll
     title="Panggil Pasien"
-    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 p-2 rounded-xl transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 p-2 rounded-xl transition-all cursor-pointer shadow-sm active:scale-95"
   ><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg></Link>}{!!appointment.checked_in && appointment.status === "in_progress" && <button
     onClick={() => {
       setSelectedAptForComplete(appointment);
     }}
     title="Selesaikan Konsultasi"
-    className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 p-2 rounded-xl transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+    className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 p-2 rounded-xl transition-all cursor-pointer shadow-sm active:scale-95"
   ><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg></button>}{appointment.status !== "rejected" && appointment.status !== "completed" && <button
     onClick={() => setAppointmentToCancel(appointment.id)}
     title="Batalkan Janji Temu"
-    className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-2 rounded-xl transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+    className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-2 rounded-xl transition-all cursor-pointer shadow-sm active:scale-95"
   ><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg></button>}</div></td></tr>)}</tbody></table>{
     /* Mobile Card View */
   }<div className="flex flex-col space-y-4 md:hidden">{filteredAppointments.map((appointment) => <div key={appointment.id} className={`bg-white dark:bg-slate-800 border ${selectedIds.includes(appointment.id) ? "border-blue-300 dark:border-blue-700 bg-blue-50/20 dark:bg-blue-900/10" : "border-gray-100 dark:border-slate-700"} rounded-2xl p-5 shadow-sm space-y-4`}><div className="flex justify-between items-start"><div className="flex items-center gap-3">{isBulkMode && <input
@@ -279,7 +279,7 @@ export default function Appointments({ auth, appointments, medications = [] }) {
                             Pertahankan
                         </button><button
     onClick={handleConfirmCancel}
-    className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-bold rounded-xl transition-all text-center shadow-md hover:shadow-lg hover:-translate-y-0.5"
+    className="flex-1 px-4 py-3 bg-rose-700 text-white font-bold rounded-xl transition-all text-center shadow-md"
   >
                             Ya, Batalkan
                         </button></div></div></Modal>{
@@ -293,7 +293,7 @@ export default function Appointments({ auth, appointments, medications = [] }) {
                             Kembali
                         </button><button
     onClick={handleBulkCancel}
-    className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-bold rounded-xl transition-all text-center shadow-md hover:shadow-lg hover:-translate-y-0.5"
+    className="flex-1 px-4 py-3 bg-rose-700 text-white font-bold rounded-xl transition-all text-center shadow-md"
   >
                             Ya, Batalkan Semua
                         </button></div></div></Modal>{
@@ -418,7 +418,7 @@ export default function Appointments({ auth, appointments, medications = [] }) {
                             </button><button
     type="submit"
     disabled={processing}
-    className="flex-1 py-3 px-4 text-xs font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 hover:shadow-lg rounded-xl shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all transform enabled:hover:scale-[1.02] outline-none"
+    className="flex-1 py-3 px-4 text-xs font-bold text-white bg-blue-700 rounded-xl shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all transform enabled:hover:scale-[1.02] outline-none"
   >
                                 Selesaikan Konsultasi
                             </button></div></form></Modal>}{

@@ -41,7 +41,7 @@ export default function AdminSettings() {
           </Card>
           <Card title="Layar Antrean (TV)">
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Tampilkan di monitor ruang tunggu. Halaman ini publik dan hanya menampilkan nomor antrean serta inisial pasien.</p>
-            <Link to="/queue/tv" target="_blank" className="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-teal-500 text-white shadow-md">Buka Layar TV</Link>
+            <Link to="/queue/tv" target="_blank" className="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold bg-blue-700 text-white shadow-md">Buka Layar TV</Link>
           </Card>
           <Card title="Akun Staf">
             <p className="text-sm text-gray-500 dark:text-gray-400">

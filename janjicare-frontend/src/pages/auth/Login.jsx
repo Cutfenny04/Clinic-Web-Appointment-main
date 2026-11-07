@@ -145,7 +145,7 @@ export default function Login() {
             name="email"
             value={data.email}
             placeholder="Masukkan alamat email"
-            className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
+            className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white"
             autoComplete="username"
             isFocused={true}
             onChange={(e) => setData("email", e.target.value)}
@@ -166,7 +166,7 @@ export default function Login() {
               name="password"
               value={data.password}
               placeholder="Masukkan kata sandi"
-              className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 pr-10 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
+              className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 pr-10 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white"
               autoComplete="current-password"
               onChange={(e) => setData("password", e.target.value)}
             />
@@ -194,7 +194,7 @@ export default function Login() {
         <div className="flex flex-col space-y-4 pt-2">
           <button
             disabled={processing}
-            className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-full shadow-[0_4px_14px_0_rgb(20,184,166,0.39)] text-sm font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 hover:shadow-[0_6px_20px_rgba(20,184,166,0.23)] hover:scale-[1.02] outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 transition-all cursor-pointer"
+            className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-md text-sm font-bold text-white bg-blue-700 outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 transition-all cursor-pointer"
           >
             <span>{processing ? "Memproses..." : "Masuk"}</span>
             <ArrowRight className="w-4 h-4" />

@@ -34,7 +34,7 @@ export default function AppointmentDetailsModal({
     /* Action Buttons */
   }<div className="flex gap-3"><button
     onClick={onClose}
-    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 font-black rounded-xl transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1 active:translate-y-0 text-sm outline-none outline-none focus:ring-0 active:outline-none"
+    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 font-black rounded-xl transition-all duration-300 shadow-sm active:translate-y-0 text-sm outline-none outline-none focus:ring-0 active:outline-none"
   >
                             Tutup
                         </button></div></div>}</Modal>;

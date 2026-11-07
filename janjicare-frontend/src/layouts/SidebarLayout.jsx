@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Toast from "@/components/Toast";
 import Modal from "@/components/Modal";
 import { useAuth } from "@/contexts/AuthContext";
+import { BrandMark } from "@/components/Brand";
 
 // Ikon (path SVG) — gaya ikon lama dipertahankan
 const I = {
@@ -120,13 +121,13 @@ export default function SidebarLayout({ header: _header, children }) {
 
       {/* Mobile Sidebar Overlay */}
       <div
-        className={`fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 bg-gray-900/80 z-40 lg:hidden transition-opacity duration-300 ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={() => setSidebarOpen(false)}
       />
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 shadow-lg transform transition-all duration-300 ease-in-out flex flex-col 
+        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 transform transition-all duration-300 ease-in-out flex flex-col 
           ${sidebarOpen ? "translate-x-0 w-72" : "-translate-x-full lg:translate-x-0 lg:static lg:inset-auto"} 
           ${isCollapsed && !sidebarOpen ? "lg:w-20" : "lg:w-72"}`}
       >
@@ -137,9 +138,7 @@ export default function SidebarLayout({ header: _header, children }) {
         >
           <div className={`flex items-center w-full overflow-hidden whitespace-nowrap ${isVisuallyCollapsed ? "justify-center" : "gap-3"}`}>
             <div className="relative flex items-center justify-center w-8 h-8 flex-shrink-0">
-              <div className={`absolute inset-0 bg-gradient-to-tr from-teal-400 to-blue-600 dark:from-teal-600 dark:to-blue-800 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm transition-opacity duration-300 pointer-events-none ${isVisuallyCollapsed ? "opacity-100 group-hover:opacity-0" : "opacity-100"}`}>
-                +
-              </div>
+              <BrandMark size={32} className={`absolute inset-0 transition-opacity duration-300 ${isVisuallyCollapsed ? "group-hover:opacity-0" : ""}`} />
               {isVisuallyCollapsed && (
                 <div className="absolute inset-0 flex items-center justify-center text-gray-400 group-hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                   <svg className="w-5 h-5 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,7 +147,7 @@ export default function SidebarLayout({ header: _header, children }) {
                 </div>
               )}
             </div>
-            <span className={`text-xl font-extrabold tracking-tight text-gray-900 dark:text-white truncate transition-all duration-300 ${isVisuallyCollapsed ? "opacity-0 w-0 hidden" : "opacity-100"}`}>
+            <span className={`font-serif text-xl font-semibold text-ink dark:text-white truncate transition-all duration-300 ${isVisuallyCollapsed ? "opacity-0 w-0 hidden" : "opacity-100"}`}>
               JanjiCare
             </span>
           </div>
@@ -188,9 +187,9 @@ export default function SidebarLayout({ header: _header, children }) {
                 key={item.name}
                 to={item.href}
                 title={isVisuallyCollapsed ? item.name : undefined}
-                className={`flex items-center rounded-xl transition-all duration-200 group font-medium border relative ${
+                className={`flex items-center rounded-md transition-colors group font-medium border relative ${
                   isActive
-                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 shadow-sm border-blue-100 dark:border-blue-800/30"
+                    ? "bg-heather/60 dark:bg-mauve-800/60 text-ink dark:text-white border-transparent before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-r before:bg-plum dark:before:bg-heather"
                     : "border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white"
                 } ${isVisuallyCollapsed ? "justify-center py-3 px-0" : "gap-3 px-4 py-3"}`}
               >
@@ -251,7 +250,7 @@ export default function SidebarLayout({ header: _header, children }) {
                 </button>
 
                 {showMoreMenu && (
-                  <div className="absolute bottom-full left-0 mb-2 w-48 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-2xl dark:shadow-black/50 border border-white/20 dark:border-slate-700/50 overflow-hidden z-[60] py-1.5 transform transition-all">
+                  <div className="absolute bottom-full left-0 mb-2 w-48 bg-white/90 dark:bg-slate-900/90 rounded-2xl shadow-sm dark:shadow-black/50 border border-white/20 dark:border-slate-700/50 overflow-hidden z-[60] py-1.5 transform transition-all">
                     {/* Ganti Tema */}
                     <button
                       onClick={() => {
@@ -274,7 +273,7 @@ export default function SidebarLayout({ header: _header, children }) {
                       <span>{isDarkMode ? "Mode Terang" : "Mode Gelap"}</span>
                     </button>
 
-                    <div className="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-slate-700 to-transparent my-1" />
+                    <div className="h-px bg-blue-700 my-1" />
 
                     {/* Tombol Keluar */}
                     <button
@@ -301,10 +300,10 @@ export default function SidebarLayout({ header: _header, children }) {
       </div>
 
       {/* Konten Utama */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 relative w-full transition-all duration-300">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-950 relative w-full transition-all duration-300">
         <button
           onClick={() => setSidebarOpen(true)}
-          className="lg:hidden print:hidden fixed top-4 left-4 z-40 p-2 rounded-xl bg-white/50 dark:bg-slate-900/50 backdrop-blur border border-gray-100 dark:border-slate-800 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 shadow-sm outline-none"
+          className="lg:hidden print:hidden fixed top-4 left-4 z-40 p-2 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 shadow-sm outline-none"
           aria-label="Buka navigasi menu"
         >
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -349,7 +348,7 @@ export default function SidebarLayout({ header: _header, children }) {
                 await logout();
                 navigate("/login", { replace: true });
               }}
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-bold rounded-xl transition-all text-center shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer disabled:opacity-60"
+              className="flex-1 px-4 py-3 bg-rose-700 text-white font-bold rounded-xl transition-all text-center shadow-md cursor-pointer disabled:opacity-60"
             >
               {loggingOut ? "Keluar..." : "Keluar"}
             </button>

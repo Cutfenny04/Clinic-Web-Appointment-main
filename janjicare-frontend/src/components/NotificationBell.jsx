@@ -98,7 +98,7 @@ export default function NotificationBell({ compact = false, className = "" }) {
   const dropdownContent = isOpen ? createPortal(
     <div
       ref={dropdownRef}
-      className={`fixed w-[calc(100vw-32px)] ${notifications.length === 0 ? "sm:w-72" : "sm:w-96"} bg-white dark:bg-slate-900 rounded-2xl shadow-2xl dark:shadow-black/40 border border-gray-100 dark:border-slate-700 overflow-hidden z-[9999] transform sm:origin-bottom-left`}
+      className={`fixed w-[calc(100vw-32px)] ${notifications.length === 0 ? "sm:w-72" : "sm:w-96"} bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-black/40 border border-gray-100 dark:border-slate-700 overflow-hidden z-[9999] transform sm:origin-bottom-left`}
       style={{
         top: `${dropdownPos.top}px`,
         left: `${dropdownPos.left}px`,
@@ -106,7 +106,7 @@ export default function NotificationBell({ compact = false, className = "" }) {
       }}
     >{
       /* Header */
-    }<div className="px-5 py-4 border-b border-gray-50 dark:border-slate-800 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white dark:from-slate-800 dark:to-slate-900"><div><h3 className="font-bold text-gray-800 dark:text-white text-sm">Notifikasi</h3><p className="text-[10px] text-gray-400 dark:text-gray-500 font-semibold capitalize mt-0.5">Pembaruan Klinik</p></div>{unreadCount > 0 && <button
+    }<div className="px-5 py-4 border-b border-gray-50 dark:border-slate-800 flex justify-between items-center bg-blue-700"><div><h3 className="font-bold text-gray-800 dark:text-white text-sm">Notifikasi</h3><p className="text-[10px] text-gray-400 dark:text-gray-500 font-semibold capitalize mt-0.5">Pembaruan Klinik</p></div>{unreadCount > 0 && <button
       onClick={markAllAsRead}
       className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-all"
     >
@@ -120,7 +120,7 @@ export default function NotificationBell({ compact = false, className = "" }) {
       title="Klik untuk menandai sudah dibaca"
     >{
       /* Type indicator dot */
-    }<span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 ${getIconColorClass(n.type)} shadow-[0_0_8px_currentColor] opacity-80`} /><div className="flex-1 min-w-0"><div className="flex justify-between items-start gap-2"><h4 className="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all truncate">{n.title || n.data?.title}</h4><span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 whitespace-nowrap bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full flex-shrink-0 border border-gray-200 dark:border-slate-700">{n.created_at || "Baru saja"}</span></div><p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-relaxed mt-1">{n.message || n.data?.message}</p></div></div>)}</div></div>,
+    }<span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 ${getIconColorClass(n.type)} opacity-80`} /><div className="flex-1 min-w-0"><div className="flex justify-between items-start gap-2"><h4 className="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all truncate">{n.title || n.data?.title}</h4><span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 whitespace-nowrap bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full flex-shrink-0 border border-gray-200 dark:border-slate-700">{n.created_at || "Baru saja"}</span></div><p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-relaxed mt-1">{n.message || n.data?.message}</p></div></div>)}</div></div>,
     document.body
   ) : null;
   return <div className="relative">{

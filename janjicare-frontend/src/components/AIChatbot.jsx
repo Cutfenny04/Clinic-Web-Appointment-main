@@ -210,14 +210,14 @@ ${rawText.replace(/\n\s*\n/g, "\n").substring(0, 3e3)}`;
     onClick={() => setIsOpen(true)}
     style={gradientStyle}
     aria-label="Buka Asisten AI"
-    className="fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-white border-2 border-white/20"
+    className="fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full shadow-sm flex items-center justify-center text-white border-2 border-white/20"
   ><Bot size={24} />{hasUnread && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-[#0a0a0a] rounded-full animate-pulse" />}</motion.button> : <motion.div
     key="chat-window"
     initial={{ opacity: 0, y: 30, scale: 0.95, transformOrigin: "bottom right" }}
     animate={{ opacity: 1, y: 0, scale: 1 }}
     exit={{ opacity: 0, y: 20, scale: 0.95, transition: { duration: 0.2, ease: "easeIn" } }}
     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-    className="fixed bottom-6 right-6 z-[100] bg-white dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/10 shadow-2xl rounded-2xl flex flex-col overflow-hidden transition-[width,height] duration-300 w-[calc(100vw-32px)] md:w-[380px] h-[550px] max-h-[75vh] overscroll-none"
+    className="fixed bottom-6 right-6 z-[100] bg-white dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/10 shadow-sm rounded-2xl flex flex-col overflow-hidden transition-[width,height] duration-300 w-[calc(100vw-32px)] md:w-[380px] h-[550px] max-h-[75vh] overscroll-none"
     onWheel={(e) => e.stopPropagation()}
     onTouchMove={(e) => e.stopPropagation()}
   >{
@@ -249,7 +249,7 @@ ${rawText.replace(/\n\s*\n/g, "\n").substring(0, 3e3)}`;
                                         Anda telah mencapai batas penggunaan gratis.
                                     </p><a
     href="/register"
-    className="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-teal-500 to-blue-600 text-white font-semibold rounded-xl shadow-md hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.02] transition-all duration-300"
+    className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-700 text-white font-semibold rounded-xl shadow-md transition-all duration-300"
   >
                                         Daftar untuk Melanjutkan
                                     </a></div> : <div className="relative flex items-center"><textarea

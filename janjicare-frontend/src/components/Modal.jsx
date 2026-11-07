@@ -48,6 +48,6 @@ export default function Modal({
     leaveFrom="opacity-100 translate-y-0 sm:scale-100"
     leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
   ><DialogPanel
-    className={`mb-6 transform ${overflowVisible ? "overflow-visible" : "overflow-hidden"} rounded-lg bg-white dark:bg-slate-800 shadow-xl transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-500/40 outline-none w-full mx-auto ${maxWidthClass}`}
+    className={`mb-6 transform ${overflowVisible ? "overflow-visible" : "overflow-hidden"} rounded-lg bg-white dark:bg-slate-800 shadow-sm transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-500/40 outline-none w-full mx-auto ${maxWidthClass}`}
   >{children}</DialogPanel></TransitionChild></Dialog></Transition>;
 }

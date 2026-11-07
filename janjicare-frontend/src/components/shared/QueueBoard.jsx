@@ -26,7 +26,7 @@ export function DoctorQueueCard({ doctorId, doctorName, tickets, onChanged, onSt
 
   return (
     <Card title={doctorName} actions={<span className="text-xs text-gray-500">{waiting.length} menunggu · {done} selesai</span>}>
-      <div className={cx("rounded-2xl p-5 mb-4 text-center", current ? "bg-gradient-to-br from-blue-600 to-teal-500 text-white" : "bg-gray-50 dark:bg-slate-700/40")}>
+      <div className={cx("rounded-2xl p-5 mb-4 text-center", current ? "bg-blue-700 text-white" : "bg-gray-50 dark:bg-slate-700/40")}>
         <p className={cx("text-xs font-bold uppercase tracking-wider", current ? "text-white/80" : "text-gray-500")}>
           {current ? (current.status === "serving" ? "Sedang diperiksa" : "Sedang dipanggil") : "Belum ada pasien dipanggil"}
         </p>

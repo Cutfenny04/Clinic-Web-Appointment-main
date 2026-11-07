@@ -31,7 +31,7 @@ export default function DevCodePanel({
   if (!code) {
     return null;
   }
-  return <section className="mt-6 rounded-3xl border border-amber-200/80 bg-amber-50/80 p-4 shadow-sm backdrop-blur dark:border-amber-500/20 dark:bg-amber-500/10"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-[11px] font-bold uppercase tracking-[0.3em] text-amber-700 dark:text-amber-300">{label}</p><h4 className="mt-1 text-sm font-semibold text-amber-950 dark:text-amber-50">{title}</h4>{expiresAt && <p className="mt-1 text-xs text-amber-800/80 dark:text-amber-200/80">
+  return <section className="mt-6 rounded-3xl border border-amber-200/80 bg-amber-50/80 p-4 shadow-sm dark:border-amber-500/20 dark:bg-amber-500/10"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-[11px] font-bold uppercase tracking-[0.3em] text-amber-700 dark:text-amber-300">{label}</p><h4 className="mt-1 text-sm font-semibold text-amber-950 dark:text-amber-50">{title}</h4>{expiresAt && <p className="mt-1 text-xs text-amber-800/80 dark:text-amber-200/80">
                             Expires at {expiresAt}</p>}</div><button
     type="button"
     onClick={() => void copyCode()}

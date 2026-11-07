@@ -40,7 +40,7 @@ export default function CustomSelect({ value, onChange, options, placeholder = "
     leave="transition ease-in duration-75"
     leaveFrom="transform opacity-100 scale-100"
     leaveTo="transform opacity-0 scale-95"
-  ><div className={`absolute z-[200] w-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden py-1 max-h-48 overflow-y-auto ${dropUp ? "bottom-full mb-2" : "top-full mt-2"}`}>{options.map((option) => <div
+  ><div className={`absolute z-[200] w-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden py-1 max-h-48 overflow-y-auto ${dropUp ? "bottom-full mb-2" : "top-full mt-2"}`}>{options.map((option) => <div
     key={option.value}
     onClick={() => {
       onChange(option.value);

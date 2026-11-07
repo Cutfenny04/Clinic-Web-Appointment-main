@@ -1,96 +1,143 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Head from "@/components/Head";
-import { useEffect, useRef, useState } from "react";
-import Lenis from "lenis";
+import Brand from "@/components/Brand";
+
+const STEPS = [
+  { no: "01", title: "Pilih dokter", text: "Lihat profil, spesialisasi, dan jadwal praktik dokter yang tersedia di klinik." },
+  { no: "02", title: "Pesan sesi", text: "Pilih tanggal dan sesi yang masih memiliki kuota. Booking tersimpan sebagai nomor urut Anda." },
+  { no: "03", title: "Check-in di klinik", text: "Pada hari praktik, lakukan check-in. Nomor antrean dibuat otomatis dan bisa dipantau dari ponsel." },
+];
+
+const FEATURES = [
+  { title: "Jadwal yang jelas", text: "Setiap sesi praktik menampilkan sisa kuota, sehingga Anda tahu sebelum datang apakah masih ada tempat." },
+  { title: "Antrean dari ponsel", text: "Pantau nomor yang sedang dilayani dan berapa pasien di depan Anda tanpa harus menunggu di ruang tunggu." },
+  { title: "Riwayat konsultasi", text: "Diagnosis dan catatan dokter tersimpan di akun Anda dan dapat dibuka kembali kapan saja." },
+];
+
 export default function Welcome({ auth }) {
-  const lenisRef = useRef(null);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      return JSON.parse(localStorage.getItem("darkMode") || "false");
-    }
-    return false;
+  const [dark, setDark] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("darkMode") || "false"); } catch { return false; }
   });
   useEffect(() => {
-    localStorage.setItem("darkMode", JSON.stringify(isDarkMode));
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [isDarkMode]);
-  useEffect(() => {
-    const lenis = new Lenis({
-      autoRaf: true,
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
-    });
-    lenisRef.current = lenis;
-    return () => {
-      lenis.destroy();
-      lenisRef.current = null;
-      document.documentElement.classList.remove("lenis", "lenis-smooth", "lenis-scrolling", "lenis-stopped");
-    };
-  }, []);
-  const scrollToFeatures = (e) => {
-    e.preventDefault();
-    if (lenisRef.current) {
-      lenisRef.current.scrollTo("#features", { offset: -80 });
-    }
-  };
-  return <><Head title="Selamat Datang di JanjiCare" /><main className="relative min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white selection:bg-teal-500 selection:text-white font-sans overflow-x-hidden transition-colors duration-500">{
-    /* Global Medical Cross Pattern Background */
-  }<div className="fixed inset-0 pointer-events-none z-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTI4IDIwaDR2OGg4djRoLTh2OGgtNHYtOGgtOHYtNGg4di04eiIgZmlsbD0iIzBmNzY2ZSIgZmlsbC1vcGFjaXR5PSIwLjA1Ii8+PC9zdmc+')] dark:opacity-10" />{
-    /* Navbar */
-  }<nav className="fixed top-0 w-full z-50 backdrop-blur-xl bg-white/60 dark:bg-slate-900/60 border-b border-white/40 dark:border-slate-800/60 transition-all duration-300"><div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4"><div className="flex items-center gap-2 group cursor-pointer"><div className="w-9 h-9 bg-gradient-to-tr from-teal-400 to-blue-600 dark:from-teal-600 dark:to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-teal-500/20 transform group-hover:rotate-12 transition-all duration-300">
-                                +
-                            </div><span className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-teal-600 group-hover:to-blue-600 transition-all duration-300">
-                                JanjiCare
-                            </span></div><div className="flex gap-2 sm:gap-4 items-center"><button
-    onClick={() => setIsDarkMode(!isDarkMode)}
-    className="p-2 rounded-full text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors focus:outline-none"
-    aria-label="Alihkan Mode Gelap"
-  >{isDarkMode ? <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg> : <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>}</button>{auth?.user ? <Link
-    to="/dashboard"
-    className="px-5 py-2.5 rounded-full font-bold bg-slate-900 dark:bg-teal-500 text-white hover:bg-teal-600 dark:hover:bg-teal-400 hover:shadow-[0_4px_14px_0_rgb(20,184,166,0.39)] hover:-translate-y-0.5 transition-all duration-300"
-  >
-                                    Buka Dasbor
-                                </Link> : <><Link
-    to="/login"
-    className="font-semibold text-slate-600 hover:text-teal-600 dark:text-teal-400 dark:text-slate-300 dark:hover:text-teal-400 px-4 py-2 transition-all hidden sm:block"
-  >
-                                        Masuk
-                                    </Link><Link
-    to="/register"
-    className="px-5 py-2.5 rounded-full font-bold bg-slate-900 dark:bg-teal-500 text-white hover:bg-teal-600 dark:hover:bg-teal-400 hover:shadow-[0_4px_14px_0_rgb(20,184,166,0.39)] hover:-translate-y-0.5 transition-all duration-300 text-sm sm:text-base"
-  >
-                                        Mulai Sekarang
-                                    </Link></>}</div></div></nav>{
-    /* Hero Section */
-  }<div className="relative pt-28 pb-12 sm:pt-40 sm:pb-24 lg:pb-32 flex flex-col items-center justify-center min-h-[100svh] text-center px-4">{
-    /* Animated Glow Blobs */
-  }<div className="absolute top-1/4 left-1/4 -translate-x-1/2 opacity-30 filter blur-[100px] pointer-events-none animate-blob"><div className="w-[40vw] h-[40vw] bg-teal-300 rounded-full mix-blend-multiply max-w-[500px] max-h-[500px]" /></div><div className="absolute top-1/3 right-1/4 translate-x-1/4 opacity-30 filter blur-[100px] pointer-events-none animate-blob animation-delay-2000"><div className="w-[30vw] h-[30vw] bg-blue-400 rounded-full mix-blend-multiply max-w-[400px] max-h-[400px]" /></div><div className="relative z-10 max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000"><h1 className="text-5xl sm:text-7xl lg:text-[5.5rem] font-extrabold tracking-tight text-slate-900 dark:text-white drop-shadow-sm leading-[1.1]">
-                            Layanan kesehatan terbaik, <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 via-blue-500 to-indigo-600 animate-gradient-x">
-                                dalam genggaman Anda.
-                            </span></h1><p className="mt-6 text-lg sm:text-2xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium">
-                            Pengalaman pemesanan janji temu medis tanpa hambatan. Pesan instan, pantau riwayat kesehatan, dan terhubung dengan dokter spesialis terbaik dengan mudah.
-                        </p><div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center"><Link
-    to={auth?.user ? "/dashboard" : "/register"}
-    className="w-full max-w-[280px] sm:max-w-none sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 rounded-full font-bold text-base sm:text-lg text-center bg-gradient-to-r from-teal-500 to-blue-600 text-white shadow-[0_8px_30px_rgb(20,184,166,0.3)] hover:shadow-[0_8px_30px_rgb(20,184,166,0.5)] hover:scale-105 transition-all duration-300"
-  >
-                                Buat Janji Temu
-                            </Link><a
-    href="#features"
-    onClick={scrollToFeatures}
-    className="w-full max-w-[280px] sm:max-w-none sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 rounded-full font-bold text-base sm:text-lg text-center bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-md border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
-  >
-                                Jelajahi Fitur
-                            </a></div></div></div>{
-    /* Features Section */
-  }<div id="features" className="py-24 relative z-10 before:absolute before:inset-0 before:bg-white/60 dark:before:bg-slate-900/60 before:backdrop-blur-3xl before:-z-10"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="text-center max-w-3xl mx-auto mb-16"><h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">Semua yang Anda butuhkan untuk mengelola kesehatan</h2><p className="mt-4 text-lg text-slate-600 dark:text-slate-300">JanjiCare dirancang untuk memudahkan penjadwalan layanan kesehatan bagi pasien maupun tenaga medis profesional.</p></div><div className="grid md:grid-cols-3 gap-8"><div className="group p-8 rounded-[2rem] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/20 dark:shadow-none hover:shadow-2xl hover:shadow-teal-500/10 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden"><div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-100 to-teal-50 dark:from-teal-900/40 dark:to-teal-800/20 flex items-center justify-center mb-8 border border-teal-200/50 dark:border-teal-700/30 shadow-sm"><svg className="w-8 h-8 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div><h3 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Pemesanan Instan</h3><p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium">Jadwalkan konsultasi dengan dokter pilihan hanya dalam beberapa klik tanpa perlu antre lama di telepon.</p></div><div className="group p-8 rounded-[2rem] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/20 dark:shadow-none hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden"><div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-800/20 flex items-center justify-center mb-8 border border-blue-200/50 dark:border-blue-700/30 shadow-sm"><svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div><h3 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Dokter Spesialis Unggulan</h3><p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium">Akses langsung ke jaringan dokter dan tenaga medis spesialis terpercaya di berbagai bidang keahlian.</p></div><div className="group p-8 rounded-[2rem] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/20 dark:shadow-none hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden"><div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-indigo-50 dark:from-indigo-900/40 dark:to-indigo-800/20 flex items-center justify-center mb-8 border border-indigo-200/50 dark:border-indigo-700/30 shadow-sm"><svg className="w-8 h-8 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg></div><h3 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Rekam Medis Aman</h3><p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium">Data rekam medis dan resep digital Anda terenkripsi aman dan selalu siap diakses saat dibutuhkan.</p></div></div></div></div>{
-    /* Footer */
-  }<footer className="bg-slate-950 text-slate-400 py-16 relative z-10"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="grid md:grid-cols-4 gap-12 mb-12"><div className="col-span-2"><div className="flex items-center gap-3 mb-6"><div className="w-10 h-10 bg-gradient-to-tr from-teal-400 to-blue-600 dark:from-teal-600 dark:to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                                        +
-                                    </div><span className="text-2xl font-extrabold tracking-tight text-white">JanjiCare</span></div><p className="text-base max-w-sm leading-relaxed">Modernisasi layanan janji temu klinik. Menghubungkan pasien dengan dokter spesialis terbaik secara cepat dan terpercaya.</p></div><div><h4 className="text-white font-bold text-lg mb-6">Tautan</h4><ul className="space-y-4 text-sm font-medium"><li><Link to="/login" className="hover:text-teal-400 transition-all">Masuk</Link></li><li><Link to="/register" className="hover:text-teal-400 transition-all">Daftar Pasien</Link></li><li><Link to="/queue/tv" className="hover:text-teal-400 transition-all">Layar Antrean</Link></li></ul></div><div><h4 className="text-white font-bold text-lg mb-6">Kontak</h4><ul className="space-y-4 text-sm font-medium"><li><a href="mailto:support@janjicare.com" className="hover:text-teal-400 transition-all">support@janjicare.com</a></li></ul></div></div><div className="border-t border-slate-800 pt-8 text-sm text-center font-medium">
-                            &copy; {(/* @__PURE__ */ new Date()).getFullYear()} JanjiCare Systems. Hak cipta dilindungi undang-undang.
-                        </div></div></footer></main></>;
+    try { localStorage.setItem("darkMode", JSON.stringify(dark)); } catch { /* abaikan */ }
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+
+  const loggedIn = !!auth?.user;
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-slate-200">
+      <Head title="Janji Temu Klinik" />
+
+      <header className="border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+          <Link to="/" aria-label="JanjiCare — beranda"><Brand size={32} textClass="text-xl" /></Link>
+          <nav className="flex items-center gap-2 sm:gap-4 text-sm font-semibold">
+            <button type="button" onClick={() => setDark(!dark)} aria-label={dark ? "Mode terang" : "Mode gelap"}
+              className="p-2 rounded-md text-gray-600 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800">
+              {dark ? "Terang" : "Gelap"}
+            </button>
+            {loggedIn ? (
+              <Link to="/dashboard" className="px-4 py-2 rounded-md bg-plum text-white hover:bg-ink dark:bg-heather dark:text-ink">Buka Dasbor</Link>
+            ) : (
+              <>
+                <Link to="/login" className="px-3 py-2 text-gray-700 hover:text-ink dark:text-slate-300 dark:hover:text-white">Masuk</Link>
+                <Link to="/register" className="px-4 py-2 rounded-md bg-plum text-white hover:bg-ink dark:bg-heather dark:text-ink">Daftar Pasien</Link>
+              </>
+            )}
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        <section className="bg-heather/50 dark:bg-slate-900/60 border-b border-gray-200 dark:border-slate-800">
+          <div className="max-w-6xl mx-auto px-5 sm:px-8 py-20 sm:py-28 grid lg:grid-cols-12 gap-10 items-end">
+            <div className="lg:col-span-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-moon dark:text-decant mb-5">Sistem janji temu klinik</p>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.1] text-ink dark:text-white">
+                Janji temu dokter,<br />tanpa antre panjang.
+              </h1>
+              <p className="mt-6 text-lg leading-relaxed text-gray-600 dark:text-slate-400 max-w-xl">
+                Pesan jadwal praktik, lakukan check-in, dan pantau nomor antrean Anda dari satu tempat.
+                Dokter dan petugas klinik bekerja dari data yang sama.
+              </p>
+              <div className="mt-9 flex flex-wrap gap-3">
+                <Link to={loggedIn ? "/dashboard" : "/register"} className="px-6 py-3 rounded-md font-semibold bg-plum text-white hover:bg-ink dark:bg-heather dark:text-ink">
+                  {loggedIn ? "Buka Dasbor" : "Buat Janji Temu"}
+                </Link>
+                <a href="#cara-kerja" className="px-6 py-3 rounded-md font-semibold border border-plum/30 text-plum hover:bg-white dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                  Cara Kerja
+                </a>
+              </div>
+            </div>
+            <aside className="lg:col-span-5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg p-6">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-4">Layar ruang tunggu</p>
+              <div className="flex items-baseline justify-between border-b border-gray-200 dark:border-slate-800 pb-4">
+                <span className="text-sm text-gray-500">Sedang dilayani</span>
+                <span className="font-serif text-4xl font-semibold text-ink dark:text-white">A-012</span>
+              </div>
+              <ul className="mt-4 space-y-2 text-sm">
+                {["A-013", "A-014", "A-015"].map((n, i) => (
+                  <li key={n} className="flex justify-between text-gray-600 dark:text-slate-400">
+                    <span>{n}</span><span>{i === 0 ? "Berikutnya" : "Menunggu"}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link to="/queue/tv" className="mt-5 inline-block text-sm font-semibold text-plum underline underline-offset-4 decoration-decant hover:decoration-plum dark:text-heather">
+                Buka layar antrean
+              </Link>
+            </aside>
+          </div>
+        </section>
+
+        <section id="cara-kerja" className="max-w-6xl mx-auto px-5 sm:px-8 py-20">
+          <h2 className="text-3xl font-semibold text-ink dark:text-white">Cara kerja</h2>
+          <p className="mt-3 text-gray-600 dark:text-slate-400 max-w-2xl">Tiga langkah dari memilih dokter sampai diperiksa.</p>
+          <ol className="mt-12 grid md:grid-cols-3 gap-px bg-gray-200 dark:bg-slate-800 border border-gray-200 dark:border-slate-800 rounded-lg overflow-hidden">
+            {STEPS.map((s) => (
+              <li key={s.no} className="bg-white dark:bg-slate-900 p-8">
+                <span className="font-serif text-3xl text-decant">{s.no}</span>
+                <h3 className="mt-4 text-xl font-semibold text-ink dark:text-white">{s.title}</h3>
+                <p className="mt-2 text-gray-600 dark:text-slate-400 leading-relaxed">{s.text}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section className="border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <div className="max-w-6xl mx-auto px-5 sm:px-8 py-20 grid md:grid-cols-3 gap-10">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="border-t-2 border-plum dark:border-heather pt-5">
+                <h3 className="text-xl font-semibold text-ink dark:text-white">{f.title}</h3>
+                <p className="mt-2 text-gray-600 dark:text-slate-400 leading-relaxed">{f.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <footer className="bg-ink text-gray-400">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-12 grid sm:grid-cols-3 gap-8 text-sm">
+          <div>
+            <span className="font-serif text-xl font-semibold text-white">JanjiCare</span>
+            <p className="mt-3 leading-relaxed">Sistem janji temu dan antrean klinik.</p>
+          </div>
+          <div>
+            <p className="font-semibold text-white mb-3">Tautan</p>
+            <ul className="space-y-2">
+              <li><Link to="/login" className="hover:text-heather">Masuk</Link></li>
+              <li><Link to="/register" className="hover:text-heather">Daftar Pasien</Link></li>
+              <li><Link to="/queue/tv" className="hover:text-heather">Layar Antrean</Link></li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-white mb-3">Kontak</p>
+            <a href="mailto:support@janjicare.com" className="hover:text-heather">support@janjicare.com</a>
+          </div>
+        </div>
+        <div className="border-t border-white/10 py-5 text-center text-xs">© {new Date().getFullYear()} JanjiCare</div>
+      </footer>
+    </div>
+  );
 }

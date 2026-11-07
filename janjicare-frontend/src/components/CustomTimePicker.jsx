@@ -53,7 +53,7 @@ export default function CustomTimePicker({
     leave="transition ease-in duration-75"
     leaveFrom="transform opacity-100 scale-100"
     leaveTo="transform opacity-0 scale-95"
-  ><div className={`absolute z-50 w-full ${placement === "top" ? "bottom-full mb-1" : "mt-2"} bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden py-2 max-h-60 overflow-y-auto`}>{timeSlots.map((slot) => {
+  ><div className={`absolute z-50 w-full ${placement === "top" ? "bottom-full mb-1" : "mt-2"} bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden py-2 max-h-60 overflow-y-auto`}>{timeSlots.map((slot) => {
     const isSelected = value === slot.value;
     return <div
       key={slot.value}

@@ -110,7 +110,7 @@ export default function VerifyEmail({
                 value={digit}
                 onChange={(e) => handleChange(e.target.value, index)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
-                className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-black text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/70 border-gray-200/80 dark:border-slate-700/80 focus:border-teal-500 focus:ring-teal-500/20 dark:focus:ring-teal-500/40 rounded-2xl shadow-sm backdrop-blur-sm transition-all duration-300 outline-none"
+                className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-black text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/70 border-gray-200/80 dark:border-slate-700/80 focus:border-teal-500 focus:ring-teal-500/20 dark:focus:ring-teal-500/40 rounded-2xl shadow-sm transition-all duration-300 outline-none"
                 autoComplete="off"
               />
             ))}
@@ -125,7 +125,7 @@ export default function VerifyEmail({
         <button
           type="submit"
           disabled={processingVerify || otp.join("").length < 6}
-          className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-full shadow-[0_4px_14px_0_rgb(20,184,166,0.39)] dark:shadow-none text-sm font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 hover:shadow-[0_6px_20px_rgba(20,184,166,0.23)] dark:hover:shadow-[0_6px_20px_rgba(20,184,166,0.15)] hover:scale-[1.02] outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 focus:ring-teal-500 transition-all duration-300 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed group cursor-pointer"
+          className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-md dark:shadow-none text-sm font-bold text-white bg-blue-700 outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 focus:ring-teal-500 transition-all duration-300 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed group cursor-pointer"
         >
           Verifikasi Kode
         </button>

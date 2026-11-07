@@ -23,7 +23,7 @@ export default function AdminPatientHistoryModal({
     leave="ease-in duration-200"
     leaveFrom="opacity-100"
     leaveTo="opacity-0"
-  ><div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm" /></Transition.Child><Transition.Child
+  ><div className="fixed inset-0 bg-gray-900/80" /></Transition.Child><Transition.Child
     as={Fragment}
     enter="ease-out duration-300"
     enterFrom="opacity-0 translate-y-full sm:translate-y-0 sm:scale-95"
@@ -31,9 +31,9 @@ export default function AdminPatientHistoryModal({
     leave="ease-in duration-200"
     leaveFrom="opacity-100 translate-y-0 sm:scale-100"
     leaveTo="opacity-0 translate-y-full sm:translate-y-0 sm:scale-95"
-  ><Dialog.Panel className="w-full h-[100dvh] sm:max-h-[90vh] sm:max-w-5xl flex flex-col bg-white dark:bg-slate-800 sm:rounded-2xl overflow-y-auto lg:overflow-hidden lg:h-[85vh] shadow-2xl relative"><div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-white dark:from-slate-800 to-transparent z-10 pointer-events-none hidden lg:block" /><button
+  ><Dialog.Panel className="w-full h-[100dvh] sm:max-h-[90vh] sm:max-w-5xl flex flex-col bg-white dark:bg-slate-800 sm:rounded-2xl overflow-y-auto lg:overflow-hidden lg:h-[85vh] shadow-sm relative"><div className="absolute top-0 left-0 right-0 h-16 bg-blue-700 z-10 pointer-events-none hidden lg:block" /><button
     onClick={onClose}
-    className="absolute top-4 right-4 text-gray-400 hover:text-rose-500 transition-all duration-300 hover:rotate-90 hover:scale-110 active:scale-95 bg-gray-50 hover:bg-rose-50 dark:bg-slate-700/50 dark:hover:bg-rose-900/30 p-1.5 rounded-full shadow-sm z-[100]"
+    className="absolute top-4 right-4 text-gray-400 hover:text-rose-500 transition-all duration-300 hover:rotate-90 active:scale-95 bg-gray-50 hover:bg-rose-50 dark:bg-slate-700/50 dark:hover:bg-rose-900/30 p-1.5 rounded-full shadow-sm z-[100]"
   ><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg></button><div className="flex flex-col lg:flex-row flex-1 min-h-0 custom-scrollbar">{
     /* Left side: Profile */
   }<div className="w-full lg:w-5/12 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-slate-700 lg:overflow-y-auto custom-scrollbar bg-gray-50/50 dark:bg-slate-900/20 shrink-0"><PatientProfileCard patient={patient} variant="split" /></div>{
@@ -50,7 +50,7 @@ export default function AdminPatientHistoryModal({
   ><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></button>}</div></div>{expandedApt === apt.id && apt.diagnosis && <div className="mt-2 p-5 bg-white dark:bg-slate-800 rounded-xl border border-teal-100 dark:border-teal-900/30 shadow-sm text-sm transition-all duration-300"><div className="mb-4"><span className="font-bold text-teal-800 dark:text-teal-300 capitalize tracking-widest text-[10px] bg-teal-50 dark:bg-teal-900/50 px-2 py-1 rounded">Diagnosis</span><p className="text-gray-800 dark:text-gray-200 mt-2 whitespace-pre-wrap font-medium">{apt.diagnosis}</p></div>{apt.prescription && <div><span className="font-bold text-blue-800 dark:text-blue-300 capitalize tracking-widest text-[10px] bg-blue-50 dark:bg-blue-900/50 px-2 py-1 rounded">Resep Obat</span><p className="text-gray-800 dark:text-gray-200 mt-2 whitespace-pre-wrap font-medium">{apt.prescription}</p></div>}{apt.prescription && <div className="mt-4 pt-4 border-t border-teal-100 dark:border-teal-900/30"><a
     href={route("prescriptions.pdf", apt.id)}
     target="_blank"
-    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow-md transition-all"
+    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-700 text-white text-sm font-bold rounded-lg shadow-sm transition-all"
   ><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                                                     Unduh PDF Resep Obat
                                                                 </a></div>}</div>}</div>)}</div></div></div></Dialog.Panel></Transition.Child></Dialog></Transition>;

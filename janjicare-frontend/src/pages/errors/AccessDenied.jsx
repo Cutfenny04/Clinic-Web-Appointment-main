@@ -22,7 +22,7 @@ export default function AccessDenied() {
           Akun Anda{user ? ` (${{ admin: "Admin", doctor: "Dokter", patient: "Pasien" }[user.role]})` : ""} tidak memiliki izin untuk membuka
           {location.state?.from ? <> halaman <code className="px-1 rounded bg-gray-100 dark:bg-slate-800">{location.state.from}</code></> : " halaman ini"}.
         </p>
-        <Link to={home} className="inline-flex items-center justify-center w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-teal-500 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all">
+        <Link to={home} className="inline-flex items-center justify-center w-full px-4 py-3 bg-blue-700 text-white font-bold rounded-xl shadow-md transition-all">
           Kembali ke Dasbor
         </Link>
       </div>

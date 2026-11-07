@@ -183,3 +183,18 @@ html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
 .lk-participant-name {
     background: transparent !important;
 }
+
+/* ── Tipografi klasik JanjiCare ───────────────────────────── */
+@layer base {
+  h1, h2, h3 {
+    font-family: theme('fontFamily.serif');
+    letter-spacing: -0.005em;
+  }
+  body {
+    font-feature-settings: "kern", "liga";
+  }
+  ::selection {
+    background: #F0D9E4;
+    color: #16131F;
+  }
+}

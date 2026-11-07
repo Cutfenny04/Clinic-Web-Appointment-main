@@ -13,7 +13,7 @@ export function PageHeader({ title, description, actions }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-6">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">{title}</h1>
+        <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">{title}</h1>
         {description && <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -23,10 +23,10 @@ export function PageHeader({ title, description, actions }) {
 
 export function Card({ className, children, title, actions, padded = true }) {
   return (
-    <section className={cx("bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700", className)}>
+    <section className={cx("bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800", className)}>
       {(title || actions) && (
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
-          {title && <h2 className="text-base font-bold text-gray-900 dark:text-white">{title}</h2>}
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-200 dark:border-slate-800">
+          {title && <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>}
           {actions}
         </div>
       )}
@@ -36,28 +36,28 @@ export function Card({ className, children, title, actions, padded = true }) {
 }
 
 const TONES = {
-  blue: "from-blue-500 to-indigo-600",
-  teal: "from-teal-400 to-emerald-600",
-  amber: "from-amber-400 to-orange-500",
-  rose: "from-rose-400 to-red-500",
-  violet: "from-violet-500 to-purple-600",
-  slate: "from-slate-400 to-slate-600",
+  blue: "bg-mauve-100 text-mauve-700 dark:bg-mauve-800 dark:text-mauve-200",
+  teal: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  rose: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+  violet: "bg-mauve-200 text-mauve-800 dark:bg-mauve-700 dark:text-mauve-100",
+  slate: "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300",
 };
 
 export function StatCard({ label, value, hint, tone = "blue", icon, loading }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 flex items-center gap-4">
-      <div className={cx("w-12 h-12 rounded-xl bg-gradient-to-br text-white flex items-center justify-center shadow-sm flex-shrink-0", TONES[tone])}>
+    <div className="bg-white dark:bg-slate-900 rounded-lg p-5 border border-gray-200 dark:border-slate-800 flex items-center gap-4">
+      <div className={cx("w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0", TONES[tone])}>
         {icon || (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
         )}
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{label}</p>
         {loading ? (
           <div className="mt-1 h-7 w-16 rounded bg-gray-100 dark:bg-slate-700 animate-pulse" />
         ) : (
-          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{value ?? "–"}</p>
+          <p className="font-serif text-2xl font-semibold text-gray-900 dark:text-white">{value ?? "–"}</p>
         )}
         {hint && <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{hint}</p>}
       </div>
@@ -83,18 +83,18 @@ const BADGE = {
 
 export function StatusBadge({ status, label }) {
   return (
-    <span className={cx("inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border whitespace-nowrap", BADGE[status] || BADGE.inactive)}>
+    <span className={cx("inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border whitespace-nowrap", BADGE[status] || BADGE.inactive)}>
       {label || formatStatus(status)}
     </span>
   );
 }
 
 const BTN = {
-  primary: "bg-gradient-to-r from-blue-600 to-teal-500 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5",
-  secondary: "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700",
-  danger: "bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-md hover:shadow-lg",
-  success: "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md hover:shadow-lg",
-  ghost: "text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700",
+  primary: "bg-plum text-white hover:bg-ink dark:bg-heather dark:text-ink dark:hover:bg-white",
+  secondary: "bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 text-gray-800 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800",
+  danger: "bg-rose-700 text-white hover:bg-rose-800",
+  success: "bg-emerald-700 text-white hover:bg-emerald-800",
+  ghost: "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800",
 };
 
 export function Button({ variant = "primary", size = "md", className, loading, disabled, children, ...props }) {
@@ -103,7 +103,7 @@ export function Button({ variant = "primary", size = "md", className, loading, d
     <button
       type="button"
       disabled={disabled || loading}
-      className={cx("inline-flex items-center justify-center gap-2 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus:outline-none focus:ring-2 focus:ring-teal-500/40", sz, BTN[variant], className)}
+      className={cx("inline-flex items-center justify-center gap-2 rounded-md font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-mauve-400", sz, BTN[variant], className)}
       {...props}
     >
       {loading && <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" aria-hidden="true" />}
@@ -201,7 +201,7 @@ export function FormModal({ open, title, onClose, onSubmit, processing, submitLa
   );
 }
 
-const inputBase = "mt-1 block w-full rounded-xl border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm text-gray-900 dark:text-slate-100 shadow-sm focus:border-teal-500 focus:ring-teal-500/20 placeholder-gray-400";
+const inputBase = "mt-1 block w-full rounded-md border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-gray-900 dark:text-slate-100 shadow-sm focus:border-mauve-500 focus:ring-mauve-500/20 placeholder-gray-400";
 
 export function Field({ label, error, hint, children, htmlFor }) {
   return (
@@ -226,7 +226,7 @@ export function SearchInput({ value, onChange, placeholder = "Cari..." }) {
       </svg>
       <input
         type="search" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={placeholder}
-        className="pl-9 w-full rounded-xl border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 text-sm dark:text-slate-100 focus:border-teal-500 focus:ring-teal-500/20"
+        className="pl-9 w-full rounded-md border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm dark:text-slate-100 focus:border-mauve-500 focus:ring-mauve-500/20"
       />
     </div>
   );
@@ -238,14 +238,14 @@ export function DataTable({ columns, rows, rowKey = "id", onRowClick }) {
     <div className="overflow-x-auto -mx-5">
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="text-left text-xs font-bold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-slate-700">
+          <tr className="text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
             {columns.map((c) => <th key={c.key} scope="col" className={cx("px-5 py-3 whitespace-nowrap", c.className)}>{c.label}</th>)}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-50 dark:divide-slate-700/60">
+        <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
           {rows.map((r) => (
             <tr key={r[rowKey]} onClick={onRowClick ? () => onRowClick(r) : undefined}
-              className={cx("hover:bg-gray-50/80 dark:hover:bg-slate-700/30", onRowClick && "cursor-pointer")}>
+              className={cx("hover:bg-mauve-50 dark:hover:bg-slate-800/60", onRowClick && "cursor-pointer")}>
               {columns.map((c) => (
                 <td key={c.key} className={cx("px-5 py-3 align-middle text-gray-700 dark:text-slate-200", c.className)}>
                   {c.render ? c.render(r) : r[c.key] ?? "–"}
@@ -261,12 +261,12 @@ export function DataTable({ columns, rows, rowKey = "id", onRowClick }) {
 
 export function Tabs({ tabs, value, onChange }) {
   return (
-    <div role="tablist" className="flex gap-1 p-1 bg-gray-100 dark:bg-slate-800 rounded-xl overflow-x-auto">
+    <div role="tablist" className="flex gap-6 border-b border-gray-200 dark:border-slate-800 overflow-x-auto">
       {tabs.map((t) => (
         <button key={t.value} role="tab" aria-selected={value === t.value} type="button" onClick={() => onChange(t.value)}
-          className={cx("px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all",
-            value === t.value ? "bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm" : "text-gray-500 hover:text-gray-800 dark:hover:text-slate-200")}>
-          {t.label}{t.count !== undefined && <span className="ml-1.5 text-[10px] opacity-70">({t.count})</span>}
+          className={cx("-mb-px py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors",
+            value === t.value ? "border-plum text-ink dark:border-heather dark:text-white" : "border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-slate-200")}>
+          {t.label}{t.count !== undefined && <span className="ml-1.5 text-xs font-normal text-gray-400">({t.count})</span>}
         </button>
       ))}
     </div>

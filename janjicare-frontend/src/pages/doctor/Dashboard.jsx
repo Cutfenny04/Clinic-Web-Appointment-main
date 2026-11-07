@@ -31,7 +31,7 @@ export default function DoctorDashboard() {
   return (
     <SidebarLayout>
       <PageHeader title={`Selamat bertugas, ${user?.name || "Dokter"}`} description={formatDateLong(today)}
-        actions={<Link to="/doctor/queue" className="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-teal-500 text-white shadow-md">Buka Antrean Hari Ini</Link>} />
+        actions={<Link to="/doctor/queue" className="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold bg-blue-700 text-white shadow-md">Buka Antrean Hari Ini</Link>} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard loading={todays.loading} label="Janji temu hari ini" value={(todays.data || []).filter((a) => a.status !== "cancelled").length} tone="blue" />
         <StatCard loading={queue.loading} label="Pasien menunggu" value={(st.waiting ?? 0) + (st.calling ?? 0)} tone="amber" />

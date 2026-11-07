@@ -28,7 +28,7 @@ export default function PatientDashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <Card title="Janji Temu Berikutnya" actions={<Link to="/patient/appointments" className="text-sm font-bold text-blue-600 hover:underline">Semua</Link>}>
           <AsyncBlock loading={appts.loading} error={appts.error} onRetry={appts.reload} empty={!next}
-            emptyTitle="Belum ada janji temu" emptyAction={<Link to="/patient/book" className="inline-flex px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-teal-500 text-white">Buat Janji Temu</Link>}>
+            emptyTitle="Belum ada janji temu" emptyAction={<Link to="/patient/book" className="inline-flex px-4 py-2.5 rounded-xl text-sm font-bold bg-blue-700 text-white">Buat Janji Temu</Link>}>
             {next && (
               <div>
                 <div className="flex justify-between items-start gap-3">

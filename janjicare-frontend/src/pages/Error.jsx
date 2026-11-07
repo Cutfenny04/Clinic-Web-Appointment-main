@@ -27,7 +27,7 @@ export default function ErrorPage({ status }) {
                         Kembali
                     </button><Link
     href="/"
-    className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded-full font-bold shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+    className="w-full sm:w-auto px-6 py-3 bg-blue-700 text-white rounded-full font-bold shadow-md transition-all duration-200"
   >
                         Kembali ke Beranda
                     </Link></div></div></div>;

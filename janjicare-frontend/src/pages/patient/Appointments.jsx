@@ -57,7 +57,7 @@ export default function PatientAppointments() {
 
   return (
     <SidebarLayout>
-      <PageHeader title="Janji Temu Saya" actions={<Link to="/patient/book" className="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-teal-500 text-white shadow-md">+ Buat Janji Temu</Link>} />
+      <PageHeader title="Janji Temu Saya" actions={<Link to="/patient/book" className="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold bg-blue-700 text-white shadow-md">+ Buat Janji Temu</Link>} />
       <div className="mb-4"><Tabs value={tab} onChange={setTab} tabs={[
         { value: "upcoming", label: "Mendatang", count: groups.upcoming.length },
         { value: "completed", label: "Selesai", count: groups.completed.length },

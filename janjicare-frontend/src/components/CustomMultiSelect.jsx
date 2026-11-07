@@ -38,7 +38,7 @@ export default function CustomMultiSelect({ value = [], onChange, options, place
     leave="transition ease-in duration-75"
     leaveFrom="transform opacity-100 scale-100"
     leaveTo="transform opacity-0 scale-95"
-  ><div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden py-2 max-h-60 overflow-y-auto">{options.length === 0 && <div className="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">No options available</div>}{options.map((option) => {
+  ><div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden py-2 max-h-60 overflow-y-auto">{options.length === 0 && <div className="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">No options available</div>}{options.map((option) => {
     const isSelected = value.includes(option.value);
     return <div
       key={option.value}

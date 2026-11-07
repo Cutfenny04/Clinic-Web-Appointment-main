@@ -161,7 +161,7 @@ export default function Schedules({ auth, schedules }) {
     /* TABLE VIEW */
     <div className="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-2xl border border-gray-100 dark:border-slate-700 relative transition-all"><div className="h-auto max-h-[700px] md:h-[calc(100vh-190px)] md:max-h-none overflow-y-auto custom-scrollbar flex flex-col">{
       /* Desktop Table View */
-    }<table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700 hidden md:table"><thead className="bg-gray-50/80 dark:bg-slate-800/80 backdrop-blur-md sticky top-0 z-10 ring-1 ring-gray-200 dark:ring-slate-700"><tr><th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider w-12">#</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Rincian Dokter</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Informasi Sesi</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Ketersediaan</th><th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Tindakan</th></tr></thead><tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">{filteredSchedules.map((schedule, index) => {
+    }<table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700 hidden md:table"><thead className="bg-gray-50/80 dark:bg-slate-800/80 sticky top-0 z-10 ring-1 ring-gray-200 dark:ring-slate-700"><tr><th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider w-12">#</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Rincian Dokter</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Informasi Sesi</th><th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Ketersediaan</th><th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 capitalize tracking-wider">Tindakan</th></tr></thead><tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">{filteredSchedules.map((schedule, index) => {
       const activeAppointments = schedule.appointments?.filter((apt) => apt.status !== "rejected") || [];
       const isFull = activeAppointments.length >= schedule.number_of_patients;
       const hasBooked = schedule.appointments?.some((apt) => apt.patient_id === auth.user.patient?.id);
@@ -169,7 +169,7 @@ export default function Schedules({ auth, schedules }) {
       return <tr key={schedule.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all"><td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-gray-400 dark:text-gray-500">{index + 1}</td><td className="px-6 py-4 whitespace-nowrap"><div
         onClick={() => setSelectedDoctorForModal(schedule.doctor)}
         className="flex items-center cursor-pointer group/doctor"
-      ><div className={`h-10 w-10 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold shadow-inner group-hover/doctor:scale-105 transition-transform duration-200 ${isFull ? "bg-gray-400" : "bg-gradient-to-br from-teal-400 to-blue-500"}`}>{schedule.doctor.user?.avatar ? <img
+      ><div className={`h-10 w-10 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold shadow-inner group-hover/doctor:scale-105 transition-transform duration-200 ${isFull ? "bg-gray-400" : "bg-blue-700"}`}>{schedule.doctor.user?.avatar ? <img
         src={`/storage/${schedule.doctor.user.avatar}`}
         alt={schedule.doctor.user.name}
         className="h-full w-full object-cover"
@@ -178,7 +178,7 @@ export default function Schedules({ auth, schedules }) {
                                                             </span>}</div><div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{new Date(schedule.date).toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" })} pukul {schedule.time}</div></td><td className="px-6 py-4 whitespace-nowrap"><span className={`px-3 py-1 inline-flex text-[10px] leading-5 font-bold rounded-full ${isFull ? "bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-400" : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400"}`}>{isFull ? "Penuh" : `${slotsLeft} slot tersisa`}</span></td><td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button
         onClick={() => openBookingModal(schedule)}
         disabled={isFull || hasBooked}
-        className={`inline-flex items-center justify-center py-2 px-4 font-bold rounded-xl shadow-sm transition-all text-xs ${isFull || hasBooked ? "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed shadow-none" : "bg-gradient-to-r from-teal-500 to-blue-600 text-white hover:shadow-md hover:scale-[1.02]"}`}
+        className={`inline-flex items-center justify-center py-2 px-4 font-bold rounded-xl shadow-sm transition-all text-xs ${isFull || hasBooked ? "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed shadow-none" : "bg-blue-700 text-white"}`}
       >{isFull ? "Sesi Penuh" : hasBooked ? "Sudah Dipesan" : "Buat Janji Temu"}</button></td></tr>;
     })}</tbody></table>{
       /* Mobile Card View */
@@ -190,7 +190,7 @@ export default function Schedules({ auth, schedules }) {
       return <div key={schedule.id} className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-4"><div className="flex justify-between items-start"><div
         onClick={() => setSelectedDoctorForModal(schedule.doctor)}
         className="flex items-center gap-3 cursor-pointer group/doctor"
-      ><div className={`h-12 w-12 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold shadow-inner group-hover/doctor:scale-105 transition-transform duration-200 ${isFull ? "bg-gray-400" : "bg-gradient-to-br from-teal-400 to-blue-500"}`}>{schedule.doctor.user?.avatar ? <img
+      ><div className={`h-12 w-12 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold shadow-inner group-hover/doctor:scale-105 transition-transform duration-200 ${isFull ? "bg-gray-400" : "bg-blue-700"}`}>{schedule.doctor.user?.avatar ? <img
         src={`/storage/${schedule.doctor.user.avatar}`}
         alt={schedule.doctor.user.name}
         className="h-full w-full object-cover"
@@ -200,7 +200,7 @@ export default function Schedules({ auth, schedules }) {
                                                             </span>}</p><p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mt-0.5">{new Date(schedule.date).toLocaleDateString("id-ID")} pukul {schedule.time}</p></div><span className={`px-2.5 py-1 inline-flex text-[10px] leading-5 font-bold rounded-lg ${isFull ? "bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-400" : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400"}`}>{isFull ? "Penuh" : `${slotsLeft} tersisa`}</span></div><div className="pt-2 border-t border-gray-100 dark:border-slate-700"><button
         onClick={() => openBookingModal(schedule)}
         disabled={isFull || hasBooked}
-        className={`w-full flex justify-center items-center py-2.5 px-4 font-bold rounded-xl shadow-sm transition-all text-xs ${isFull || hasBooked ? "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed shadow-none" : "bg-gradient-to-r from-teal-500 to-blue-600 text-white hover:shadow-md hover:scale-[1.02]"}`}
+        className={`w-full flex justify-center items-center py-2.5 px-4 font-bold rounded-xl shadow-sm transition-all text-xs ${isFull || hasBooked ? "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed shadow-none" : "bg-blue-700 text-white"}`}
       >{isFull ? "Sesi Penuh" : hasBooked ? "Sudah Dipesan" : "Buat Janji Temu"}</button></div></div>;
     })}</div>{filteredSchedules.length === 0 && <div className="flex-1 flex flex-col justify-center items-center p-10 text-center text-gray-500">{searchQuery ? <><p className="font-bold text-gray-700 text-base mb-1">
                                                 Tidak ada sesi ditemukan untuk "{searchQuery.toLowerCase().startsWith("dr.") ? searchQuery : `dr. ${searchQuery}`}"
@@ -236,7 +236,7 @@ export default function Schedules({ auth, schedules }) {
         key={dayStr}
         onClick={() => setSelectedDate(dayStr)}
         className={`p-2 rounded-2xl border text-center flex flex-col justify-between items-center cursor-pointer transition-all min-h-[50px] relative ${isSelected ? "bg-blue-600 dark:bg-blue-600 text-white border-transparent shadow-md scale-102" : isToday ? "bg-blue-50/80 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800/50 text-blue-700 dark:text-blue-400 hover:bg-blue-100/50 dark:hover:bg-blue-800/30" : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"}`}
-      ><span className="text-xs font-black">{day.getDate()}</span>{daySchedules.length > 0 && <span className={`w-2.5 h-2.5 rounded-full flex items-center justify-center mt-1.5 shadow-sm ${isSelected ? "bg-white" : "bg-gradient-to-tr from-teal-400 to-blue-500"}`} title={`${daySchedules.length} Sesi`} />}</div>;
+      ><span className="text-xs font-black">{day.getDate()}</span>{daySchedules.length > 0 && <span className={`w-2.5 h-2.5 rounded-full flex items-center justify-center mt-1.5 shadow-sm ${isSelected ? "bg-white" : "bg-blue-700"}`} title={`${daySchedules.length} Sesi`} />}</div>;
     })}</div></div>{
       /* Right Side: Sidebar listing sessions for the selected calendar day */
     }<div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col h-full overflow-hidden transition-all"><div className="border-b border-slate-100 dark:border-slate-700 pb-3 mb-4"><h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm">Sesi Tersedia</h3><p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-0.5">{new Date(selectedDate).toLocaleDateString("id-ID", { dateStyle: "long" })}</p></div><div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar min-h-[300px] md:min-h-0">{selectedDateSchedules.length === 0 ? <div className="h-full flex flex-col items-center justify-center text-center p-8 text-gray-400"><svg className="w-12 h-12 text-gray-200 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><h4 className="font-bold text-xs">Tidak Ada Sesi Terjadwal</h4><p className="text-[10px] mt-0.5">Tidak ada sesi praktik dokter yang tersedia pada tanggal ini.</p></div> : selectedDateSchedules.map((schedule) => {
@@ -268,7 +268,7 @@ export default function Schedules({ auth, schedules }) {
     leave="ease-in duration-200"
     leaveFrom="opacity-100"
     leaveTo="opacity-0"
-  ><div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" /></Transition.Child><div className="fixed inset-0 overflow-y-auto"><div className="flex min-h-full items-center justify-center p-4 text-center"><Transition.Child
+  ><div className="fixed inset-0 bg-gray-900/60" /></Transition.Child><div className="fixed inset-0 overflow-y-auto"><div className="flex min-h-full items-center justify-center p-4 text-center"><Transition.Child
     as={Fragment}
     enter="ease-out duration-300"
     enterFrom="opacity-0 scale-95"
@@ -276,7 +276,7 @@ export default function Schedules({ auth, schedules }) {
     leave="ease-in duration-200"
     leaveFrom="opacity-100 scale-100"
     leaveTo="opacity-0 scale-95"
-  ><Dialog.Panel className="w-full max-w-md transform flex flex-col max-h-[90vh] overflow-hidden rounded-3xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-2xl transition-all relative"><button
+  ><Dialog.Panel className="w-full max-w-md transform flex flex-col max-h-[90vh] overflow-hidden rounded-3xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-sm transition-all relative"><button
     onClick={closeBookingModal}
     className="absolute top-4 right-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-all bg-gray-100 dark:bg-slate-700 rounded-full p-1 outline-none z-10"
   ><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>{selectedSchedule && <><div className="text-center mb-5 flex-shrink-0"><div className="h-14 w-14 bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto mb-3"><svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div><Dialog.Title as="h3" className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -320,7 +320,7 @@ export default function Schedules({ auth, schedules }) {
           }
         }, 50);
       }}
-      className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center justify-center gap-1 ${isBooked ? "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-600 cursor-not-allowed line-through" : isSelected ? "bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-800 border-transparent text-white shadow-md" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600"}`}
+      className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center justify-center gap-1 ${isBooked ? "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-600 cursor-not-allowed line-through" : isSelected ? "bg-blue-700 border-transparent text-white shadow-md" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600"}`}
     ><span>{formatTimeSlot12Hour(slot)}</span><span className={`text-[10px] ${isBooked ? "text-slate-400 font-medium" : isSelected ? "text-blue-100 font-medium" : "text-emerald-600 font-black"}`}>{isBooked ? "Penuh" : "Tersedia"}</span></button>;
   })}</div></div><div
     id="tnc-section"
@@ -345,7 +345,7 @@ export default function Schedules({ auth, schedules }) {
     type="submit"
     form="booking-form"
     disabled={processing || !confirmCheckbox || !data.time_slot}
-    className="flex-1 py-3 px-4 text-sm font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 hover:shadow-lg rounded-xl shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all transform enabled:hover:scale-[1.02] outline-none"
+    className="flex-1 py-3 px-4 text-sm font-bold text-white bg-blue-700 rounded-xl shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all transform enabled:hover:scale-[1.02] outline-none"
   >
                                                     Konfirmasi Reservasi
                                                 </button></div></>}</Dialog.Panel></Transition.Child></div></div></Dialog></Transition>{

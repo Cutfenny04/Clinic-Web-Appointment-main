@@ -41,10 +41,11 @@ const AuthContext = createContext<AuthContextType | null>(null);
 function translateSupabaseError(message = ""): string {
   const m = message.toLowerCase();
   if (m.includes("invalid login credentials")) return "Email atau kata sandi salah.";
-  if (m.includes("email not confirmed")) return "Email belum dikonfirmasi. Periksa kotak masuk Anda.";
+  if (m.includes("not confirmed") || m.includes("confirm")) return "Email belum dikonfirmasi. Buka tautan konfirmasi yang dikirim ke email Anda, lalu coba masuk lagi.";
+  if (m.includes("disabled")) return "Login dengan email sedang dinonaktifkan di pengaturan Supabase.";
   if (m.includes("rate limit") || m.includes("too many")) return "Terlalu banyak percobaan masuk. Coba lagi nanti.";
   if (m.includes("fetch") || m.includes("network")) return "Tidak dapat terhubung ke layanan autentikasi.";
-  return "Gagal masuk. Periksa kembali email dan kata sandi Anda.";
+  return `Gagal masuk: ${message}`;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

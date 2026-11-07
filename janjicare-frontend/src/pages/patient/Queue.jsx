@@ -20,7 +20,7 @@ export default function PatientQueue() {
         emptyAction={<Link to="/patient/appointments" className="text-sm font-bold text-blue-600">Lihat janji temu saya</Link>}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {active.map((t) => (
-            <div key={t.id} className={cx("rounded-3xl p-6 text-white shadow-lg", t.status === "calling" ? "bg-gradient-to-br from-amber-500 to-orange-600 animate-pulse" : "bg-gradient-to-br from-blue-600 to-teal-500")}>
+            <div key={t.id} className={cx("rounded-3xl p-6 text-white shadow-lg", t.status === "calling" ? "bg-amber-600 animate-pulse" : "bg-blue-700")}>
               <p className="text-sm font-bold text-white/80">{t.doctor_name}</p>
               <p className="text-xs text-white/70">{formatDateLong(t.date)}</p>
               <p className="text-6xl font-black my-4 tracking-tight" aria-live="polite">{t.queue_code}</p>

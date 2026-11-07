@@ -34,7 +34,7 @@ export default function ConfirmPassword() {
             name="password"
             value={data.password}
             placeholder="Masukkan kata sandi Anda"
-            className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
+            className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white"
             isFocused={true}
             onChange={(e) => setData("password", e.target.value)}
           />

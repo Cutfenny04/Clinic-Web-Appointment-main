@@ -14,7 +14,7 @@ function DoctorDetail({ doctor, onClose }) {
       {doctor && (
         <div className="p-6">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-teal-400 text-white font-black text-xl flex items-center justify-center">{initials(doctor.name)}</div>
+            <div className="w-16 h-16 rounded-2xl bg-blue-700 text-white font-black text-xl flex items-center justify-center">{initials(doctor.name)}</div>
             <div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">{doctor.name}</h3>
               <p className="text-sm font-semibold text-teal-600">{doctor.specialty}</p>
@@ -37,7 +37,7 @@ function DoctorDetail({ doctor, onClose }) {
           )}
           <div className="mt-6 flex justify-end gap-2">
             <Button variant="secondary" onClick={onClose}>Tutup</Button>
-            <Link to={`/patient/book?doctor=${doctor.id}`} className="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-teal-500 text-white shadow-md">Buat Janji Temu</Link>
+            <Link to={`/patient/book?doctor=${doctor.id}`} className="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold bg-blue-700 text-white shadow-md">Buat Janji Temu</Link>
           </div>
         </div>
       )}
@@ -75,14 +75,14 @@ export default function PatientDoctors() {
           {rows.map((d) => (
             <article key={d.id} className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-teal-400 text-white font-black flex items-center justify-center">{initials(d.name)}</div>
+                <div className="w-12 h-12 rounded-xl bg-blue-700 text-white font-black flex items-center justify-center">{initials(d.name)}</div>
                 <div className="min-w-0"><h2 className="font-bold text-gray-900 dark:text-white truncate">{d.name}</h2><p className="text-sm font-semibold text-teal-600">{d.specialty}</p></div>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 flex-1">{d.bio || "Belum ada profil singkat."}</p>
               <p className="mt-3 text-xs text-gray-500">{d.experience_years} tahun pengalaman · {formatCurrency(d.consultation_fee)}</p>
               <div className="mt-4 flex gap-2">
                 <Button variant="secondary" size="sm" className="flex-1" onClick={() => setSelected(d)}>Detail & Jadwal</Button>
-                <Link to={`/patient/book?doctor=${d.id}`} className="flex-1 inline-flex items-center justify-center px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-teal-500 text-white">Buat Janji</Link>
+                <Link to={`/patient/book?doctor=${d.id}`} className="flex-1 inline-flex items-center justify-center px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-700 text-white">Buat Janji</Link>
               </div>
             </article>
           ))}

@@ -38,7 +38,7 @@ export default function ForgotPassword() {
             className="mt-1 block w-full rounded-xl py-3" placeholder="Masukkan alamat email" onChange={(e) => setEmail(e.target.value)} />
           <InputError message={error} className="mt-2" />
         </div>
-        <button disabled={processing} className="w-full py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 disabled:opacity-50">
+        <button disabled={processing} className="w-full py-3.5 rounded-md text-sm font-bold text-white bg-blue-700 disabled:opacity-50">
           {processing ? "Mengirim..." : "Kirim Tautan Pemulihan"}
         </button>
         <p className="text-center text-sm"><Link to="/login" className="text-teal-600 font-bold hover:underline">Kembali ke halaman masuk</Link></p>

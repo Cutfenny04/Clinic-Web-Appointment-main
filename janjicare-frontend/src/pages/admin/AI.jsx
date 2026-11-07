@@ -44,7 +44,7 @@ export default function AI({ auth, aiProviderApiKey }) {
     value={data.ai_provider_api_key}
     onChange={(e) => setData("ai_provider_api_key", e.target.value)}
     autoComplete="new-password"
-    className="px-3 pr-10 block w-full rounded-xl border-slate-300 dark:border-slate-600 bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-white focus:border-transparent focus:ring-0 sm:text-sm py-2 shadow-sm backdrop-blur-sm transition-colors"
+    className="px-3 pr-10 block w-full rounded-xl border-slate-300 dark:border-slate-600 bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-white focus:border-transparent focus:ring-0 sm:text-sm py-2 shadow-sm transition-colors"
     placeholder="Masukkan API key Anda..."
   /><button
     type="button"
@@ -55,7 +55,7 @@ export default function AI({ auth, aiProviderApiKey }) {
                                 </p></div><div className="pt-4 border-t border-slate-100 dark:border-slate-700/50 flex flex-col sm:flex-row gap-3 items-center"><button
     type="submit"
     disabled={processing}
-    className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-blue-600 hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.02] outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+    className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-700 outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
   ><Save className="w-4 h-4" />{processing ? "Menyimpan..." : "Simpan Pengaturan"}</button><button
     type="button"
     disabled={isTesting || !data.ai_provider_api_key}
@@ -83,12 +83,12 @@ export default function AI({ auth, aiProviderApiKey }) {
         setIsTesting(false);
       }
     }}
-    className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-4 py-2 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 hover:scale-[1.02] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+    className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-4 py-2 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
   >{isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cpu className="w-4 h-4" />}{isTesting ? "Menguji..." : "Uji Koneksi"}</button></div></form></div></div>{
     /* Terminal UI (Separated from Settings Box) */
   }<div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm flex flex-col transition-all"><div className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700 px-3 py-2 flex items-center justify-between select-none"><div className="flex items-center gap-2 text-slate-500 dark:text-slate-400"><Terminal className="w-4 h-4" /><span className="text-xs font-semibold tracking-wider uppercase">Log Koneksi</span></div><div className="flex items-center gap-4">{
     /* AI Status Indicator */
-  }<div className="flex items-center justify-center gap-2 px-3 py-1 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm"><div className={`w-2 h-2 rounded-full shrink-0 -translate-y-[0.5px] ${aiStatus === "online" ? "bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.8)] animate-pulse" : aiStatus === "offline" ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]" : "bg-slate-300 dark:bg-slate-600"}`} /><span className="text-[10px] font-bold tracking-widest uppercase text-slate-600 dark:text-slate-300 relative top-[0.5px]">{aiStatus === "online" ? "AI Aktif" : aiStatus === "offline" ? "AI Terputus" : "Status Belum Diketahui"}</span></div><button
+  }<div className="flex items-center justify-center gap-2 px-3 py-1 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm"><div className={`w-2 h-2 rounded-full shrink-0 -translate-y-[0.5px] ${aiStatus === "online" ? "bg-teal-500 animate-pulse" : aiStatus === "offline" ? "bg-rose-500" : "bg-slate-300 dark:bg-slate-600"}`} /><span className="text-[10px] font-bold tracking-widest uppercase text-slate-600 dark:text-slate-300 relative top-[0.5px]">{aiStatus === "online" ? "AI Aktif" : aiStatus === "offline" ? "AI Terputus" : "Status Belum Diketahui"}</span></div><button
     type="button"
     onClick={() => setConsoleLogs([])}
     className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"

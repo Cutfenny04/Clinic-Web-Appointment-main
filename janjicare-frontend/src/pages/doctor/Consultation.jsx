@@ -40,7 +40,7 @@ export default function DoctorConsultation() {
         {!appt ? (
           <Card><EmptyState title="Tidak ada pemeriksaan yang berlangsung"
             description="Panggil pasien dari antrean lalu tekan “Mulai Pemeriksaan”."
-            action={<Link to="/doctor/queue" className="inline-flex px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-teal-500 text-white">Ke Antrean Hari Ini</Link>} /></Card>
+            action={<Link to="/doctor/queue" className="inline-flex px-4 py-2.5 rounded-xl text-sm font-bold bg-blue-700 text-white">Ke Antrean Hari Ini</Link>} /></Card>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             <Card title="Data Pasien">

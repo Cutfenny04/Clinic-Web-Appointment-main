@@ -43,7 +43,7 @@ export default function AdminDoctorHistoryModal({
     leave="ease-in duration-200"
     leaveFrom="opacity-100"
     leaveTo="opacity-0"
-  ><div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm" /></Transition.Child><Transition.Child
+  ><div className="fixed inset-0 bg-gray-900/80" /></Transition.Child><Transition.Child
     as={Fragment}
     enter="ease-out duration-300"
     enterFrom="opacity-0 translate-y-full sm:translate-y-0 sm:scale-95"
@@ -51,9 +51,9 @@ export default function AdminDoctorHistoryModal({
     leave="ease-in duration-200"
     leaveFrom="opacity-100 translate-y-0 sm:scale-100"
     leaveTo="opacity-0 translate-y-full sm:translate-y-0 sm:scale-95"
-  ><Dialog.Panel className="w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-5xl flex flex-col bg-white dark:bg-slate-800 sm:rounded-2xl overflow-hidden shadow-2xl relative"><div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-white dark:from-slate-800 to-transparent z-10 pointer-events-none hidden lg:block" /><button
+  ><Dialog.Panel className="w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-5xl flex flex-col bg-white dark:bg-slate-800 sm:rounded-2xl overflow-hidden shadow-sm relative"><div className="absolute top-0 left-0 right-0 h-16 bg-blue-700 z-10 pointer-events-none hidden lg:block" /><button
     onClick={onClose}
-    className="absolute top-4 right-4 text-gray-400 hover:text-rose-500 transition-all duration-300 hover:rotate-90 hover:scale-110 active:scale-95 bg-gray-50 hover:bg-rose-50 dark:bg-slate-700/50 dark:hover:bg-rose-900/30 p-1.5 rounded-full shadow-sm z-[100]"
+    className="absolute top-4 right-4 text-gray-400 hover:text-rose-500 transition-all duration-300 hover:rotate-90 active:scale-95 bg-gray-50 hover:bg-rose-50 dark:bg-slate-700/50 dark:hover:bg-rose-900/30 p-1.5 rounded-full shadow-sm z-[100]"
   ><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg></button><div className="flex flex-col lg:flex-row h-full overflow-y-auto lg:overflow-hidden custom-scrollbar">{
     /* Left side: Profile */
   }<div className="w-full lg:w-5/12 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-slate-700 lg:overflow-y-auto custom-scrollbar bg-gray-50/50 dark:bg-slate-900/20 shrink-0"><DoctorProfileCard doctor={internalDoctor} variant="split" /></div>{

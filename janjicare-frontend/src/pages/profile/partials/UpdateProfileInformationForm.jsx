@@ -55,7 +55,7 @@ export default function UpdateProfileInformation({
                     Perbarui informasi profil dan alamat email akun Anda.
                 </p></header>{
     /* Profile Avatar Upload Section */
-  }<div className="mt-6 flex items-center gap-6 pb-6 border-b border-gray-100 dark:border-slate-700"><div className="relative group shrink-0"><div className="h-20 w-20 rounded-full overflow-hidden bg-gradient-to-tr from-teal-400 to-blue-500 flex items-center justify-center text-white text-3xl font-bold shadow-sm border-2 border-gray-100 dark:border-slate-700">{user.avatar ? <img
+  }<div className="mt-6 flex items-center gap-6 pb-6 border-b border-gray-100 dark:border-slate-700"><div className="relative group shrink-0"><div className="h-20 w-20 rounded-full overflow-hidden bg-blue-700 flex items-center justify-center text-white text-3xl font-bold shadow-sm border-2 border-gray-100 dark:border-slate-700">{user.avatar ? <img
     src={`/storage/${user.avatar}`}
     alt={user.name}
     className="h-full w-full object-cover"

@@ -54,7 +54,7 @@ export default function MiniCalendar({ value, onChange, available = new Set(), m
               className={cx(
                 "h-10 rounded-lg text-sm font-semibold relative transition-all",
                 !inMonth && "opacity-30",
-                selected ? "bg-gradient-to-br from-blue-600 to-teal-500 text-white shadow"
+                selected ? "bg-blue-700 text-white shadow"
                   : selectable ? "bg-teal-50 dark:bg-teal-900/20 text-teal-800 dark:text-teal-200 hover:bg-teal-100"
                     : "text-gray-300 dark:text-slate-600 cursor-not-allowed",
                 d === today && !selected && "ring-1 ring-blue-400"

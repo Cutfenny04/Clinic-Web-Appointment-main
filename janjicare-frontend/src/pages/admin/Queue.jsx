@@ -28,7 +28,7 @@ export default function AdminQueue() {
   return (
     <SidebarLayout>
       <PageHeader title="Antrean Hari Ini" description={`${formatDateLong(today)} · diperbarui otomatis setiap 5 detik`}
-        actions={<Link to="/queue/tv" target="_blank" className="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-teal-500 text-white shadow-md">Buka Layar TV</Link>} />
+        actions={<Link to="/queue/tv" target="_blank" className="inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-bold bg-blue-700 text-white shadow-md">Buka Layar TV</Link>} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard loading={q.loading} label="Total tiket" value={st.total} tone="blue" />
         <StatCard loading={q.loading} label="Menunggu" value={(st.waiting ?? 0) + (st.calling ?? 0)} tone="amber" />

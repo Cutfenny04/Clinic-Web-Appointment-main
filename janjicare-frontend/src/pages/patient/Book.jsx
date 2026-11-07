@@ -85,7 +85,7 @@ export default function PatientBook() {
             </div>
             <p className="mt-4 text-xs text-gray-500">Nomor antrean dibuat saat Anda check-in di klinik pada hari praktik.</p>
             <div className="mt-6 flex justify-center gap-2">
-              <Link to="/patient/appointments" className="inline-flex px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-teal-500 text-white">Lihat Janji Temu Saya</Link>
+              <Link to="/patient/appointments" className="inline-flex px-4 py-2.5 rounded-xl text-sm font-bold bg-blue-700 text-white">Lihat Janji Temu Saya</Link>
               <Button variant="secondary" onClick={() => { setResult(null); setScheduleId(""); setComplaint(""); schedules.reload(); }}>Buat Lagi</Button>
             </div>
           </div>
