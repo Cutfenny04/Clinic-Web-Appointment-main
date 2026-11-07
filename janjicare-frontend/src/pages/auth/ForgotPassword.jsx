@@ -1,70 +1,47 @@
-import route from '@/utils/route';
+import { useState } from "react";
 import InputError from "@/components/InputError";
 import InputLabel from "@/components/InputLabel";
 import TextInput from "@/components/TextInput";
 import GuestLayout from "@/layouts/GuestLayout";
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Link } from "react-router-dom";
+import Head from "@/components/Head";
+import { supabase } from "@/lib/supabase";
 
-export default function ForgotPassword({ status }) {
-  const { data, setData, post, processing, errors } = useForm({
-    email: ""
-  });
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const submit = (e) => {
+export default function ForgotPassword() {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState(null);
+  const [status, setStatus] = useState(null);
+  const [processing, setProcessing] = useState(false);
+
+  const submit = async (e) => {
     e.preventDefault();
-    post(route("password.email"));
+    if (!EMAIL_RE.test(email.trim())) return setError("Format email tidak valid.");
+    setError(null); setProcessing(true);
+    // Pesan sama untuk email terdaftar maupun tidak (mencegah enumerasi akun)
+    await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${window.location.origin}/reset-password` }).catch(() => {});
+    setProcessing(false);
+    setStatus("Jika email tersebut terdaftar, tautan untuk membuat kata sandi baru telah dikirim. Periksa kotak masuk atau folder spam.");
   };
 
   return (
-    <GuestLayout
-      title="Atur Ulang Kata Sandi"
-      description="Masukkan alamat email Anda untuk menerima tautan pemulihan kata sandi."
-    >
+    <GuestLayout title="Atur Ulang Kata Sandi" description="Masukkan alamat email Anda untuk menerima tautan pemulihan kata sandi.">
       <Head title="Lupa Kata Sandi" />
-
-      <div className="mb-6 text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-        Lupa kata sandi Anda? Tidak masalah. Beritahukan alamat email yang Anda gunakan saat mendaftar, dan kami akan mengirimkan tautan untuk membuat kata sandi baru.
-      </div>
-
       {status && (
-        <div className="mb-6 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 p-3 rounded-xl border border-green-100 dark:border-green-800/50">
-          {status}
-        </div>
+        <div role="status" className="mb-6 text-sm font-medium text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 p-3 rounded-xl border border-green-100 dark:border-green-800/50">{status}</div>
       )}
-
-      <form onSubmit={submit} className="space-y-5">
+      <form onSubmit={submit} className="space-y-5" noValidate>
         <div>
           <InputLabel htmlFor="email" value="Alamat Email" className="font-semibold text-gray-700 dark:text-gray-200" />
-          <TextInput
-            id="email"
-            type="email"
-            name="email"
-            value={data.email}
-            placeholder="Masukkan alamat email Anda"
-            className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-            isFocused={true}
-            onChange={(e) => setData("email", e.target.value)}
-          />
-          <InputError message={errors.email} className="mt-2" />
+          <TextInput id="email" type="email" name="email" value={email} isFocused autoComplete="email"
+            className="mt-1 block w-full rounded-xl py-3" placeholder="Masukkan alamat email" onChange={(e) => setEmail(e.target.value)} />
+          <InputError message={error} className="mt-2" />
         </div>
-
-        <div className="flex flex-col space-y-4 pt-2">
-          <button
-            disabled={processing}
-            className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-full shadow-[0_4px_14px_0_rgb(20,184,166,0.39)] dark:shadow-none text-sm font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 hover:shadow-[0_6px_20px_rgba(20,184,166,0.23)] dark:hover:shadow-[0_6px_20px_rgba(20,184,166,0.15)] hover:scale-[1.02] outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 focus:ring-teal-500 transition-all duration-300 disabled:opacity-50 cursor-pointer"
-          >
-            Kirim Tautan Pemulihan
-          </button>
-
-          <div className="flex justify-center mt-2">
-            <Link
-              href={route("login")}
-              className="text-sm text-gray-500 dark:text-gray-400 font-medium hover:text-gray-900 dark:hover:text-white transition-all"
-            >
-              Kembali ke <span className="text-teal-600 dark:text-teal-400 font-semibold hover:text-teal-500 dark:hover:text-teal-300 ml-1">Halaman Masuk</span>
-            </Link>
-          </div>
-        </div>
+        <button disabled={processing} className="w-full py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 disabled:opacity-50">
+          {processing ? "Mengirim..." : "Kirim Tautan Pemulihan"}
+        </button>
+        <p className="text-center text-sm"><Link to="/login" className="text-teal-600 font-bold hover:underline">Kembali ke halaman masuk</Link></p>
       </form>
     </GuestLayout>
   );

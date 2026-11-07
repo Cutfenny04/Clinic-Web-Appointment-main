@@ -7,10 +7,15 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node --test tests/**/*.test.js",
+    "test": "node --test \"tests/**/*.test.js\"",
     "lint": "echo \"Linter belum dikonfigurasi.\""
   },
-  "keywords": ["janjicare", "clinic", "healthcare", "api"],
+  "keywords": [
+    "janjicare",
+    "clinic",
+    "healthcare",
+    "api"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -24,10 +29,14 @@
     "zod": "^3.24.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "pg": "^8.23.1"
   },
   "nodemonConfig": {
-    "ignore": ["tests/*", "sql/*"],
+    "ignore": [
+      "tests/*",
+      "sql/*"
+    ],
     "ext": "js,json"
   }
 }

@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import queueRoutes from "./routes/queue.routes.js";
@@ -8,7 +7,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+// Tanpa CORS: layanan internal, tidak untuk dipanggil langsung dari browser.
 app.use(express.json());
 
 if (process.env.NODE_ENV !== "production") {
@@ -22,7 +21,6 @@ app.get("/health", (req, res) => {
   res.status(200).json({
     success: true,
     service: "janjicare-queue-service",
-    port: 3002,
   });
 });
 

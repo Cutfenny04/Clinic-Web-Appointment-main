@@ -1,12 +1,14 @@
 import { useEffect, useState, useRef } from "react";
-import { Head, router } from "@inertiajs/react";
+import Head from "@/components/Head";
+import { apiService } from "@/services/api";
 import { motion, AnimatePresence } from "framer-motion";
-export default function QueueTV({ queueData }) {
+export default function QueueTV() {
+  const [queueData, setQueueData] = useState([]);
   const [hasStarted, setHasStarted] = useState(false);
   const [audioContext, setAudioContext] = useState(null);
   const [flashingDoctorId, setFlashingDoctorId] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const previousQueueDataRef = useRef(queueData);
+  const previousQueueDataRef = useRef([]);
   const playDing = (ctx) => {
     try {
       if (ctx.state === "suspended") {
@@ -38,34 +40,32 @@ export default function QueueTV({ queueData }) {
       console.error("Audio playback failed", e);
     }
   };
+  // Data antrean dari Backend API (/queue/display) — publik, tanpa nama lengkap pasien.
+  // Polling 5 detik: portabel ke AWS tanpa bergantung pada Supabase Realtime.
+  const [loadError, setLoadError] = useState(null);
   useEffect(() => {
-    // Supabase Realtime subscription untuk pembaruan antrean
-    import("@/lib/supabase").then(({ supabase }) => {
-      const channel = supabase
-        .channel("realtime:queue_tv")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "appointments" },
-          (payload) => {
-            console.log("Realtime queue update received:", payload);
-            if (router?.reload) {
-              router.reload({ only: ["queueData"] });
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    });
-
-    const interval = setInterval(() => {
-      if (router?.reload) {
-        router.reload({ only: ["queueData"] });
+    let alive = true;
+    const load = async () => {
+      try {
+        const res = await apiService.queue.display();
+        if (!alive) return;
+        setQueueData(
+          (res.data?.doctors || [])
+            .filter((d) => d.current || d.waiting.length)
+            .map((d) => ({
+              doctor: { id: d.doctor_id, user: { name: d.doctor_name }, specialty: { name: d.doctor_specialty || "Dokter Umum" } },
+              currently_serving: d.current ? { id: d.current.id, appointment_number: d.current.queue_code } : null,
+              waiting: d.waiting.map((w) => ({ id: w.id, appointment_number: w.queue_code })),
+            }))
+        );
+        setLoadError(null);
+      } catch (e) {
+        if (alive) setLoadError(e.message);
       }
-    }, 6e4);
-    return () => clearInterval(interval);
+    };
+    load();
+    const interval = setInterval(load, 5000);
+    return () => { alive = false; clearInterval(interval); };
   }, []);
   useEffect(() => {
     if (!hasStarted || !audioContext) return;
@@ -89,7 +89,7 @@ export default function QueueTV({ queueData }) {
     }
     previousQueueDataRef.current = queueData;
   }, [queueData, hasStarted, audioContext]);
-  const currentTime = (/* @__PURE__ */ new Date()).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  const currentTime = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
   if (!hasStarted) {
     return <div className={`min-h-screen ${isDarkMode ? "dark bg-slate-900" : "bg-gray-50"} flex flex-col items-center justify-center transition-all duration-500 p-8 relative`}><Head title="Mulai Tampilan TV" />{
       /* Hidden Theme Toggle (Top Right Corner) */
@@ -129,7 +129,7 @@ export default function QueueTV({ queueData }) {
                             Pembaruan Langsung Aktif
                         </p></div></div><div className={`text-xl sm:text-3xl md:text-5xl font-bold tracking-tighter tabular-nums py-0 md:py-4 mr-1 md:mr-4 z-10 pointer-events-none ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>{currentTime}</div></div>{
     /* Main Content */
-  }<div className="flex-1 p-4 md:p-8 flex flex-col relative z-10">{queueData.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center text-center px-4"><h2 className={`text-2xl md:text-4xl font-bold ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>Ruang Tunggu Kosong</h2><p className={`text-base md:text-xl mt-4 ${isDarkMode ? "text-slate-600" : "text-slate-500"}`}>Tidak ada pasien yang sedang mendaftar saat ini.</p></div> : <div className="w-full h-full flex flex-col gap-4"><div className="flex-1 flex flex-col gap-3 md:gap-4 content-start overflow-hidden pb-4 px-1 md:px-2 pt-2"><AnimatePresence mode="popLayout">{queueData.map((data) => {
+  }<div className="flex-1 p-4 md:p-8 flex flex-col relative z-10">{queueData.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center text-center px-4"><h2 className={`text-2xl md:text-4xl font-bold ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{loadError ? "Data Antrean Tidak Tersedia" : "Ruang Tunggu Kosong"}</h2><p className={`text-base md:text-xl mt-4 ${isDarkMode ? "text-slate-600" : "text-slate-500"}`}>{loadError ? `${loadError} Mencoba lagi otomatis...` : "Belum ada pasien yang check-in saat ini."}</p></div> : <div className="w-full h-full flex flex-col gap-4"><div className="flex-1 flex flex-col gap-3 md:gap-4 content-start overflow-hidden pb-4 px-1 md:px-2 pt-2"><AnimatePresence mode="popLayout">{queueData.map((data) => {
     if (!data.currently_serving && (!data.waiting || data.waiting.length === 0)) return null;
     const currentNumber = data.currently_serving ? data.currently_serving.appointment_number : data.waiting[0]?.appointment_number;
     const isWaiting = !data.currently_serving;
@@ -145,9 +145,9 @@ export default function QueueTV({ queueData }) {
     >{
       /* Number Side */
     }<div className={`w-1/3 md:w-1/4 border-r flex flex-col items-center justify-center p-1 md:p-2 relative transition-all duration-300 ${isFlashing ? "bg-emerald-200/50 border-emerald-300/50 dark:bg-emerald-800/50 dark:border-emerald-500/50" : isDarkMode ? "bg-slate-900/50 border-slate-700" : "bg-gray-50 border-gray-200"}`}><span className={`text-[9px] md:text-[10px] capitalize font-bold tracking-widest absolute top-1 md:top-2 transition-all duration-300 ${isFlashing ? "text-emerald-700 dark:text-emerald-200" : isDarkMode ? "text-slate-500" : "text-gray-400"}`}>Tiket</span><span className={`text-4xl md:text-5xl mt-2 md:mt-3 font-black tracking-tighter tabular-nums drop-shadow-md transition-all duration-300 ${isFlashing ? "text-emerald-900 dark:text-white" : isWaiting ? "text-amber-500 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                                                    #{currentNumber}</span></div>{
+                                                    {currentNumber}</span></div>{
       /* Room / Doctor Side */
-    }<div className="w-2/3 md:w-3/4 flex flex-col md:flex-row items-start md:items-center justify-center md:justify-between px-4 md:px-6 gap-1 md:gap-0 overflow-hidden"><h2 className={`text-xl md:text-3xl font-extrabold truncate w-full md:w-auto drop-shadow-sm transition-all duration-300 ${isFlashing ? "text-emerald-900 dark:text-white" : isDarkMode ? "text-white" : "text-slate-800"}`}>dr. {data.doctor.user.name}</h2><p className={`text-[10px] md:text-sm font-bold capitalize tracking-widest px-2 py-1 md:px-4 md:py-1.5 rounded-lg border truncate transition-all duration-300 ${isFlashing ? "bg-emerald-500/20 text-emerald-800 border-emerald-400/50 dark:text-emerald-100 dark:border-emerald-400/30" : "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400"}`}>{data.doctor.specialty.name}</p></div></motion.div>;
+    }<div className="w-2/3 md:w-3/4 flex flex-col md:flex-row items-start md:items-center justify-center md:justify-between px-4 md:px-6 gap-1 md:gap-0 overflow-hidden"><h2 className={`text-xl md:text-3xl font-extrabold truncate w-full md:w-auto drop-shadow-sm transition-all duration-300 ${isFlashing ? "text-emerald-900 dark:text-white" : isDarkMode ? "text-white" : "text-slate-800"}`}>{data.doctor.user.name}</h2><p className={`text-[10px] md:text-sm font-bold capitalize tracking-widest px-2 py-1 md:px-4 md:py-1.5 rounded-lg border truncate transition-all duration-300 ${isFlashing ? "bg-emerald-500/20 text-emerald-800 border-emerald-400/50 dark:text-emerald-100 dark:border-emerald-400/30" : "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400"}`}>{data.doctor.specialty.name}</p></div></motion.div>;
   })}</AnimatePresence></div></div>}</div>{
     /* Ticker / Marquee footer */
   }<div className="bg-blue-600 text-white py-3 overflow-hidden whitespace-nowrap shadow-xl mt-auto border-t border-blue-700 z-10 relative"><div className="inline-block animate-[marquee_40s_linear_infinite]"><span className="text-sm sm:text-base md:text-xl font-medium tracking-wide mx-4 sm:mx-10">Selamat datang di Klinik JanjiCare! Mohon tunggu hingga nomor Anda dipanggil.</span><span className="text-sm sm:text-base md:text-xl font-medium tracking-wide mx-4 sm:mx-10">Pastikan ponsel Anda dalam mode senyap.</span><span className="text-sm sm:text-base md:text-xl font-medium tracking-wide mx-4 sm:mx-10">Siapkan kartu berobat atau KTP Anda untuk verifikasi.</span><span className="text-sm sm:text-base md:text-xl font-medium tracking-wide mx-4 sm:mx-10">Jika mengalami gejala parah, segera beritahu resepsionis.</span><span className="text-sm sm:text-base md:text-xl font-medium tracking-wide mx-4 sm:mx-10">Pasien tanpa janji temu diterima berdasarkan ketersediaan dokter.</span><span className="text-sm sm:text-base md:text-xl font-medium tracking-wide mx-4 sm:mx-10">Penggunaan masker sangat dianjurkan di dalam area klinik.</span>{

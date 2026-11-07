@@ -1,4 +1,4 @@
-import { Link } from "@inertiajs/react";
+import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 export default function GuestLayout({ children, title, description }) {
@@ -53,7 +53,7 @@ export default function GuestLayout({ children, title, description }) {
 
         {/* Logo & Header */}
         <div className="text-center mb-8 flex flex-col items-center w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <Link href="/" className="flex items-center gap-3 group mb-6 relative">
+          <Link to="/" className="flex items-center gap-3 group mb-6 relative">
             <div className="absolute inset-0 bg-teal-400 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
             <div className="relative w-14 h-14 bg-gradient-to-tr from-teal-400 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-3xl shadow-lg shadow-teal-500/30 dark:shadow-teal-900/30 transform group-hover:rotate-[15deg] group-hover:scale-110 transition-all duration-500">
               +

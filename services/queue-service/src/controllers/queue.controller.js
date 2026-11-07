@@ -1,23 +1,23 @@
 import { queueService } from "../services/queue.service.js";
+import { todayJakarta } from "../config/index.js";
 
 export function getHealth(req, res) {
   res.status(200).json({
     success: true,
     service: "janjicare-queue-service",
     status: "healthy",
-    port: 3002,
+    storage: "postgresql",
     timestamp: new Date().toISOString(),
   });
 }
 
-export function createTicket(req, res, next) {
+export async function createTicket(req, res, next) {
   try {
-    const { ticket, is_duplicate } = queueService.generateTicket(req.body);
+    const { ticket, is_duplicate } = await queueService.generateTicket(req.body, req.actorId);
     res.status(is_duplicate ? 200 : 201).json({
       success: true,
-      message: is_duplicate
-        ? "Tiket antrean sudah ada (idempotent)."
-        : "Nomor antrean berhasil dibuat.",
+      message: is_duplicate ? "Tiket antrean sudah ada (idempotent)." : "Nomor antrean berhasil dibuat.",
+      is_duplicate,
       data: ticket,
     });
   } catch (err) {
@@ -25,52 +25,30 @@ export function createTicket(req, res, next) {
   }
 }
 
-export function getQueues(req, res, next) {
+export async function getQueues(req, res, next) {
   try {
-    const queues = queueService.getQueues(req.query);
-    res.status(200).json({
-      success: true,
-      data: queues,
-    });
+    res.status(200).json({ success: true, data: await queueService.getQueues(req.query) });
   } catch (err) {
     next(err);
   }
 }
 
-export function getCurrentServing(req, res, next) {
+export async function getCurrentServing(req, res, next) {
   try {
-    const current = queueService.getCurrentServing(
-      req.params.doctorId,
-      req.query.date
-    );
-    res.status(200).json({
-      success: true,
-      data: current,
-    });
+    const current = await queueService.getCurrentServing(req.params.doctorId, req.query.date || todayJakarta());
+    res.status(200).json({ success: true, data: current });
   } catch (err) {
     next(err);
   }
 }
 
-export function callNext(req, res, next) {
+export async function callNext(req, res, next) {
   try {
     const { doctor_id, date } = req.body;
-    if (!doctor_id) {
-      return res.status(400).json({
-        success: false,
-        message: "doctor_id wajib diisi.",
-      });
-    }
-
-    const nextPatient = queueService.callNext(doctor_id, date);
+    const nextPatient = await queueService.callNext(doctor_id, date || todayJakarta(), req.actorId);
     if (!nextPatient) {
-      return res.status(200).json({
-        success: true,
-        message: "Tidak ada pasien dalam antrean tunggu.",
-        data: null,
-      });
+      return res.status(200).json({ success: true, message: "Tidak ada pasien dalam antrean tunggu.", data: null });
     }
-
     res.status(200).json({
       success: true,
       message: `Memanggil antrean nomor ${nextPatient.queue_code}`,
@@ -81,29 +59,29 @@ export function callNext(req, res, next) {
   }
 }
 
-export function updateStatus(req, res, next) {
+export async function updateStatus(req, res, next) {
   try {
-    const updated = queueService.updateTicketStatus(
-      req.params.ticketId,
-      req.body.status
-    );
+    const updated = await queueService.updateTicketStatus(req.params.ticketId, req.body.status, req.actorId);
+    res.status(200).json({ success: true, message: "Status antrean berhasil diperbarui.", data: updated });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getStats(req, res, next) {
+  try {
     res.status(200).json({
       success: true,
-      message: "Status antrean berhasil diperbarui.",
-      data: updated,
+      data: await queueService.getStats(req.query.date || todayJakarta(), req.query.doctor_id || null),
     });
   } catch (err) {
     next(err);
   }
 }
 
-export function getStats(req, res, next) {
+export async function getDisplay(req, res, next) {
   try {
-    const stats = queueService.getStats(req.query.date);
-    res.status(200).json({
-      success: true,
-      data: stats,
-    });
+    res.status(200).json({ success: true, data: await queueService.getDisplay(req.query.date || todayJakarta()) });
   } catch (err) {
     next(err);
   }

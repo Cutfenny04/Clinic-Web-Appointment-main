@@ -4,7 +4,7 @@ import SidebarLayout from "@/layouts/SidebarLayout";
 import Modal from "@/components/Modal";
 import PatientDetailsModal from "@/components/PatientDetailsModal";
 import { Head, Link, router, useForm } from "@inertiajs/react";
-import { formatTime12Hour } from "../../Utils/time";
+import { formatTime12Hour } from "../../utils/time";
 import { formatStatus, formatDate, formatTime } from "@/utils/format";
 import CustomSelect from "@/components/CustomSelect";
 export default function Appointments({ auth, appointments, medications = [] }) {

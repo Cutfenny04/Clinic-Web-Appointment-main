@@ -1,11 +1,11 @@
 import { useState } from "react";
 import SidebarLayout from "@/layouts/SidebarLayout";
 import { Head } from "@inertiajs/react";
-import DeleteUserForm from "./Partials/DeleteUserForm";
-import UpdatePasswordForm from "./Partials/UpdatePasswordForm";
-import UpdateProfileInformationForm from "./Partials/UpdateProfileInformationForm";
-import LogoutOtherBrowserSessionsForm from "./Partials/LogoutOtherBrowserSessionsForm";
-import UpdateMedicalProfileForm from "./Partials/UpdateMedicalProfileForm";
+import DeleteUserForm from "./partials/DeleteUserForm";
+import UpdatePasswordForm from "./partials/UpdatePasswordForm";
+import UpdateProfileInformationForm from "./partials/UpdateProfileInformationForm";
+import LogoutOtherBrowserSessionsForm from "./partials/LogoutOtherBrowserSessionsForm";
+import UpdateMedicalProfileForm from "./partials/UpdateMedicalProfileForm";
 export default function Edit({ auth, mustVerifyEmail, status, sessions = [], patientData }) {
   const [activeTab, setActiveTab] = useState("profile");
   const tabs = [

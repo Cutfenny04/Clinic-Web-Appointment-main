@@ -1,186 +1,126 @@
 import { supabaseAuthClient } from "../../config/supabase.js";
 import { ApiError } from "../../utils/ApiError.js";
+import { toApiError } from "../../utils/dbError.js";
+import { todayJakarta } from "../../utils/time.js";
+
+const COLS = "id, doctor_id, schedule_date, start_time, end_time, capacity, is_active, created_at";
 
 /**
- * Mengambil daftar jadwal dokter dengan optional filter
+ * Daftar jadwal + nama/spesialisasi dokter + kuota terisi.
+ * Query: doctor_id, date, from, to, is_active, upcoming=true
+ * Dokter yang login (mine=true) melihat jadwalnya sendiri termasuk yang nonaktif.
  */
-export async function getSchedulesList(client = supabaseAuthClient, query = {}) {
-  const { doctor_id, date, is_active } = query;
+export async function getSchedulesList(client = supabaseAuthClient, query = {}, viewer = null) {
+  let q = client.from("doctor_schedules").select(COLS)
+    .order("schedule_date", { ascending: true }).order("start_time", { ascending: true });
 
-  let dbQuery = client
-    .from("doctor_schedules")
-    .select(`
-      id,
-      doctor_id,
-      schedule_date,
-      start_time,
-      end_time,
-      capacity,
-      is_active,
-      created_at
-    `)
-    .order("schedule_date", { ascending: true })
-    .order("start_time", { ascending: true });
+  const doctorId = viewer?.role === "doctor" && query.mine === "true" ? viewer.id : query.doctor_id;
+  if (doctorId) q = q.eq("doctor_id", doctorId);
+  if (query.date) q = q.eq("schedule_date", query.date);
+  if (query.from) q = q.gte("schedule_date", query.from);
+  if (query.to) q = q.lte("schedule_date", query.to);
+  if (query.upcoming === "true") q = q.gte("schedule_date", todayJakarta());
+  if (query.is_active !== undefined) q = q.eq("is_active", query.is_active === "true" || query.is_active === true);
 
-  if (doctor_id) {
-    dbQuery = dbQuery.eq("doctor_id", doctor_id);
-  }
+  const { data, error } = await q;
+  if (error) throw toApiError(error, "Gagal memuat jadwal.");
+  if (!data?.length) return [];
 
-  if (date) {
-    dbQuery = dbQuery.eq("schedule_date", date);
-  }
+  const doctorIds = [...new Set(data.map((s) => s.doctor_id))];
+  const [docs, details, counts] = await Promise.all([
+    client.from("profiles").select("id, full_name").in("id", doctorIds),
+    client.from("doctor_details").select("user_id, specialty").in("user_id", doctorIds),
+    client.rpc("schedule_booked_counts", { p_schedule_ids: data.map((s) => s.id) }),
+  ]);
+  const name = Object.fromEntries((docs.data || []).map((d) => [d.id, d.full_name]));
+  const spec = Object.fromEntries((details.data || []).map((d) => [d.user_id, d.specialty]));
+  const booked = Object.fromEntries((counts.data || []).map((c) => [c.schedule_id, c.booked]));
 
-  if (is_active !== undefined) {
-    dbQuery = dbQuery.eq("is_active", is_active === "true" || is_active === true);
-  }
-
-  const { data, error } = await dbQuery;
-
-  if (error) {
-    throw ApiError.internal("Gagal memuat jadwal: " + error.message);
-  }
-
-  if (!data || data.length === 0) {
-    return [];
-  }
-
-  // Ambil nama dokter secara efisien
-  const doctorIds = [...new Set(data.map((s) => s.doctor_id).filter(Boolean))];
-  const doctorMap = {};
-  if (doctorIds.length > 0) {
-    const { data: doctors } = await client
-      .from("profiles")
-      .select("id, full_name")
-      .in("id", doctorIds);
-    if (doctors) {
-      doctors.forEach((d) => {
-        doctorMap[d.id] = d.full_name;
-      });
-    }
-  }
-
-  return data.map((s) => ({
-    id: s.id,
-    doctor_id: s.doctor_id,
-    doctor_name: doctorMap[s.doctor_id] || "Dokter",
-    schedule_date: s.schedule_date,
-    start_time: s.start_time,
-    end_time: s.end_time,
-    capacity: s.capacity,
-    is_active: s.is_active,
-    created_at: s.created_at,
-  }));
+  return data.map((s) => {
+    const b = booked[s.id] || 0;
+    return {
+      ...s,
+      doctor_name: name[s.doctor_id] || "Dokter",
+      doctor_specialty: spec[s.doctor_id] || null,
+      booked_count: b,
+      remaining: Math.max(0, s.capacity - b),
+      is_full: b >= s.capacity,
+    };
+  });
 }
 
-/**
- * Mengambil seluruh jadwal untuk dokter tertentu
- */
 export async function getSchedulesByDoctor(doctorId, client = supabaseAuthClient) {
-  return getSchedulesList(client, { doctor_id: doctorId, is_active: true });
+  return getSchedulesList(client, { doctor_id: doctorId, is_active: true, upcoming: "true" });
 }
 
-/**
- * Membuat jadwal dokter baru (Admin atau Dokter untuk dirinya sendiri)
- */
+function assertTimes(start, end) {
+  if (start && end && start >= end) throw ApiError.badRequest("Jam mulai harus lebih awal dari jam selesai.");
+}
+
+async function loadOwned(scheduleId, userProfile, client) {
+  const { data, error } = await client.from("doctor_schedules").select(COLS).eq("id", scheduleId).maybeSingle();
+  if (error) throw toApiError(error);
+  if (!data) throw ApiError.notFound("Jadwal tidak ditemukan.");
+  if (userProfile.role === "doctor" && data.doctor_id !== userProfile.id) {
+    throw ApiError.forbidden("Anda hanya boleh mengelola jadwal praktik Anda sendiri.");
+  }
+  return data;
+}
+
+async function activeBookings(client, scheduleId) {
+  const { data } = await client.rpc("schedule_booked_counts", { p_schedule_ids: [scheduleId] });
+  return data?.[0]?.booked || 0;
+}
+
 export async function createSchedule(payload, userProfile, client) {
-  let targetDoctorId = payload.doctor_id;
+  const doctorId = userProfile.role === "doctor" ? userProfile.id : payload.doctor_id;
+  if (!doctorId) throw ApiError.badRequest("Dokter wajib dipilih.");
+  assertTimes(payload.start_time, payload.end_time);
+  if (payload.schedule_date < todayJakarta()) throw ApiError.badRequest("Tanggal praktik tidak boleh di masa lalu.");
 
-  // Jika yang login dokter, doctor_id otomatis adalah dirinya
-  if (userProfile.role === "doctor") {
-    targetDoctorId = userProfile.id;
-  } else if (!targetDoctorId) {
-    throw ApiError.badRequest("doctor_id wajib diisi oleh Admin.");
-  }
+  const { data: overlap } = await client.from("doctor_schedules").select("id")
+    .eq("doctor_id", doctorId).eq("schedule_date", payload.schedule_date)
+    .lt("start_time", payload.end_time).gt("end_time", payload.start_time).limit(1);
+  if (overlap?.length) throw ApiError.conflict("Jadwal bertabrakan dengan jadwal lain dokter ini pada tanggal yang sama.");
 
-  // Validasi jam mulai < jam selesai
-  if (payload.start_time >= payload.end_time) {
-    throw ApiError.badRequest("Jam mulai harus lebih awal dari jam selesai.");
-  }
-
-  const { data, error } = await client
-    .from("doctor_schedules")
-    .insert({
-      doctor_id: targetDoctorId,
-      schedule_date: payload.schedule_date,
-      start_time: payload.start_time,
-      end_time: payload.end_time,
-      capacity: payload.capacity || 10,
-      is_active: payload.is_active ?? true,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    throw ApiError.internal("Gagal membuat jadwal: " + error.message);
-  }
-
+  const { data, error } = await client.from("doctor_schedules").insert({
+    doctor_id: doctorId,
+    schedule_date: payload.schedule_date,
+    start_time: payload.start_time,
+    end_time: payload.end_time,
+    capacity: payload.capacity || 10,
+    is_active: payload.is_active ?? true,
+  }).select(COLS).single();
+  if (error) throw toApiError(error, "Gagal membuat jadwal.");
   return data;
 }
 
-/**
- * Mengupdate jadwal (Admin atau Dokter pemilik jadwal)
- */
 export async function updateSchedule(scheduleId, payload, userProfile, client) {
-  // Cek jadwal eksis
-  const { data: existing, error: existErr } = await client
-    .from("doctor_schedules")
-    .select("id, doctor_id")
-    .eq("id", scheduleId)
-    .single();
-
-  if (existErr || !existing) {
-    throw ApiError.notFound("Jadwal tidak ditemukan.");
+  const existing = await loadOwned(scheduleId, userProfile, client);
+  assertTimes(payload.start_time || existing.start_time, payload.end_time || existing.end_time);
+  if (payload.capacity !== undefined) {
+    const b = await activeBookings(client, scheduleId);
+    if (payload.capacity < b) throw ApiError.badRequest(`Kapasitas tidak boleh kurang dari jumlah booking aktif (${b}).`);
   }
-
-  // Otorisasi: hanya admin atau dokter pemilik
-  if (userProfile.role === "doctor" && existing.doctor_id !== userProfile.id) {
-    throw ApiError.forbidden("Anda hanya boleh mengubah jadwal praktik Anda sendiri.");
-  }
-
-  if (payload.start_time && payload.end_time && payload.start_time >= payload.end_time) {
-    throw ApiError.badRequest("Jam mulai harus lebih awal dari jam selesai.");
-  }
-
-  const { data, error } = await client
-    .from("doctor_schedules")
-    .update(payload)
-    .eq("id", scheduleId)
-    .select()
-    .single();
-
-  if (error) {
-    throw ApiError.internal("Gagal mengupdate jadwal: " + error.message);
-  }
-
+  const { data, error } = await client.from("doctor_schedules").update(payload).eq("id", scheduleId).select(COLS).single();
+  if (error) throw toApiError(error, "Gagal memperbarui jadwal.");
   return data;
 }
 
-/**
- * Menghapus jadwal (Admin atau Dokter pemilik jadwal)
- */
+/** Menghapus jadwal akan menghapus janji temu terkait (ON DELETE CASCADE) — jadi ditolak bila ada booking aktif. */
 export async function deleteSchedule(scheduleId, userProfile, client) {
-  const { data: existing, error: existErr } = await client
-    .from("doctor_schedules")
-    .select("id, doctor_id")
-    .eq("id", scheduleId)
-    .single();
-
-  if (existErr || !existing) {
-    throw ApiError.notFound("Jadwal tidak ditemukan.");
+  await loadOwned(scheduleId, userProfile, client);
+  const b = await activeBookings(client, scheduleId);
+  if (b > 0) {
+    throw ApiError.conflict(`Jadwal memiliki ${b} janji temu aktif. Nonaktifkan jadwal atau batalkan janji temu terlebih dahulu.`);
   }
-
-  if (userProfile.role === "doctor" && existing.doctor_id !== userProfile.id) {
-    throw ApiError.forbidden("Anda hanya boleh menghapus jadwal praktik Anda sendiri.");
+  const { count } = await client.from("appointments").select("id", { count: "exact", head: true }).eq("schedule_id", scheduleId);
+  if (count > 0) {
+    // Ada riwayat (selesai/batal): nonaktifkan saja agar riwayat tidak hilang
+    await client.from("doctor_schedules").update({ is_active: false }).eq("id", scheduleId);
+    return { message: "Jadwal memiliki riwayat janji temu sehingga dinonaktifkan (tidak dihapus)." };
   }
-
-  const { error } = await client
-    .from("doctor_schedules")
-    .delete()
-    .eq("id", scheduleId);
-
-  if (error) {
-    throw ApiError.internal("Gagal menghapus jadwal: " + error.message);
-  }
-
+  const { error } = await client.from("doctor_schedules").delete().eq("id", scheduleId);
+  if (error) throw toApiError(error, "Gagal menghapus jadwal.");
   return { message: "Jadwal berhasil dihapus." };
 }

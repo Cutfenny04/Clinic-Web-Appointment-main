@@ -1,90 +1,70 @@
-import route from '@/utils/route';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import InputError from "@/components/InputError";
 import InputLabel from "@/components/InputLabel";
-import PrimaryButton from "@/components/PrimaryButton";
 import TextInput from "@/components/TextInput";
 import GuestLayout from "@/layouts/GuestLayout";
-import { Head, useForm } from "@inertiajs/react";
+import { Link } from "react-router-dom";
+import Head from "@/components/Head";
+import { supabase } from "@/lib/supabase";
 
-export default function ResetPassword({ token, email }) {
-  const { data, setData, post, processing, errors, reset } = useForm({
-    token,
-    email,
-    password: "",
-    password_confirmation: ""
-  });
+/** Dibuka dari tautan email Supabase (sesi pemulihan otomatis terbentuk dari URL). */
+export default function ResetPassword() {
+  const navigate = useNavigate();
+  const [ready, setReady] = useState(false);
+  const [form, setForm] = useState({ password: "", confirm: "" });
+  const [errors, setErrors] = useState({});
+  const [processing, setProcessing] = useState(false);
 
-  const submit = (e) => {
-    e.preventDefault();
-    post(route("password.store"), {
-      onFinish: () => reset("password", "password_confirmation")
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setReady(!!data.session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || session) setReady(true);
     });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    const v = {};
+    if (form.password.length < 8) v.password = "Kata sandi minimal 8 karakter.";
+    if (form.password !== form.confirm) v.confirm = "Konfirmasi kata sandi tidak sama.";
+    setErrors(v);
+    if (Object.keys(v).length) return;
+    setProcessing(true);
+    const { error } = await supabase.auth.updateUser({ password: form.password });
+    setProcessing(false);
+    if (error) return setErrors({ general: "Tautan sudah kedaluwarsa atau tidak valid. Minta tautan baru." });
+    await supabase.auth.signOut();
+    navigate("/login?reset=1", { replace: true });
   };
 
   return (
-    <GuestLayout
-      title="Kata Sandi Baru"
-      description="Silakan buat kata sandi baru untuk akun JanjiCare Anda."
-    >
+    <GuestLayout title="Buat Kata Sandi Baru" description="Masukkan kata sandi baru untuk akun Anda.">
       <Head title="Atur Ulang Kata Sandi" />
-
-      <form onSubmit={submit} className="space-y-4">
-        <div>
-          <InputLabel htmlFor="email" value="Alamat Email" className="font-semibold text-gray-700 dark:text-gray-200" />
-          <TextInput
-            id="email"
-            type="email"
-            name="email"
-            value={data.email}
-            placeholder="Alamat email Anda"
-            className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-            autoComplete="username"
-            onChange={(e) => setData("email", e.target.value)}
-          />
-          <InputError message={errors.email} className="mt-2" />
+      {!ready ? (
+        <div className="text-sm text-gray-600 dark:text-gray-300 space-y-3">
+          <p>Buka halaman ini melalui tautan pemulihan yang dikirim ke email Anda.</p>
+          <Link to="/forgot-password" className="text-teal-600 font-bold hover:underline">Minta tautan pemulihan</Link>
         </div>
-
-        <div className="mt-4">
-          <InputLabel htmlFor="password" value="Kata Sandi Baru" className="font-semibold text-gray-700 dark:text-gray-200" />
-          <TextInput
-            id="password"
-            type="password"
-            name="password"
-            value={data.password}
-            placeholder="Minimal 8 karakter"
-            className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-            autoComplete="new-password"
-            isFocused={true}
-            onChange={(e) => setData("password", e.target.value)}
-          />
-          <InputError message={errors.password} className="mt-2" />
-        </div>
-
-        <div className="mt-4">
-          <InputLabel
-            htmlFor="password_confirmation"
-            value="Konfirmasi Kata Sandi Baru"
-            className="font-semibold text-gray-700 dark:text-gray-200"
-          />
-          <TextInput
-            type="password"
-            id="password_confirmation"
-            name="password_confirmation"
-            value={data.password_confirmation}
-            placeholder="Ulangi kata sandi baru"
-            className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-            autoComplete="new-password"
-            onChange={(e) => setData("password_confirmation", e.target.value)}
-          />
-          <InputError message={errors.password_confirmation} className="mt-2" />
-        </div>
-
-        <div className="mt-6 flex items-center justify-end">
-          <PrimaryButton className="w-full justify-center py-3.5" disabled={processing}>
-            Perbarui Kata Sandi
-          </PrimaryButton>
-        </div>
-      </form>
+      ) : (
+        <form onSubmit={submit} className="space-y-5" noValidate>
+          {errors.general && <div role="alert" className="text-sm text-rose-700 bg-rose-50 p-3 rounded-xl">{errors.general}</div>}
+          <div>
+            <InputLabel htmlFor="password" value="Kata Sandi Baru" />
+            <TextInput id="password" type="password" autoComplete="new-password" className="mt-1 block w-full rounded-xl py-3" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            <InputError message={errors.password} className="mt-2" />
+          </div>
+          <div>
+            <InputLabel htmlFor="confirm" value="Ulangi Kata Sandi Baru" />
+            <TextInput id="confirm" type="password" autoComplete="new-password" className="mt-1 block w-full rounded-xl py-3" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
+            <InputError message={errors.confirm} className="mt-2" />
+          </div>
+          <button disabled={processing} className="w-full py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 disabled:opacity-50">
+            {processing ? "Menyimpan..." : "Simpan Kata Sandi"}
+          </button>
+        </form>
+      )}
     </GuestLayout>
   );
 }

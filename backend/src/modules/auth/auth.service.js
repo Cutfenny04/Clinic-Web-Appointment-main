@@ -34,7 +34,7 @@ export async function registerUser({ email, password, full_name, phone }) {
     if (error.message.toLowerCase().includes("already registered")) {
       throw ApiError.conflict("Email sudah terdaftar. Gunakan email lain.");
     }
-    throw ApiError.badRequest(error.message);
+    throw ApiError.badRequest(translateAuthError(error.message));
   }
 
   return { user: data.user, session: data.session };
@@ -58,7 +58,10 @@ export async function loginUser({ email, password }) {
 
   if (error) {
     // Jangan bocorkan apakah email tidak ada atau password salah
-    throw ApiError.unauthorized("Email atau password tidak valid.");
+    if (error.message?.toLowerCase().includes("email not confirmed")) {
+      throw ApiError.unauthorized("Email belum dikonfirmasi. Periksa kotak masuk Anda.");
+    }
+    throw ApiError.unauthorized("Email atau kata sandi salah.");
   }
 
   return { user: data.user, session: data.session };
@@ -91,12 +94,25 @@ export async function logoutUser(accessToken) {
 export function getCurrentUserPayload(authUser, profile) {
   return {
     id: authUser.id,
-    email: authUser.email,
-    email_confirmed_at: authUser.email_confirmed_at,
+    email: profile.email || authUser.email,
+    email_confirmed_at: authUser.email_confirmed_at || null,
     full_name: profile.full_name,
+    name: profile.full_name,
     role: profile.role,
     phone: profile.phone || null,
     avatar_url: profile.avatar_url || null,
-    created_at: authUser.created_at,
+    is_active: profile.is_active !== false,
+    created_at: profile.created_at || authUser.created_at,
   };
+}
+
+/** Terjemahan pesan umum Supabase Auth ke Bahasa Indonesia */
+export function translateAuthError(message = "") {
+  const m = message.toLowerCase();
+  if (m.includes("password should be")) return "Kata sandi terlalu lemah. Gunakan minimal 8 karakter.";
+  if (m.includes("invalid email")) return "Format email tidak valid.";
+  if (m.includes("rate limit") || m.includes("too many")) return "Terlalu banyak percobaan. Coba lagi nanti.";
+  if (m.includes("email not confirmed")) return "Email belum dikonfirmasi. Periksa kotak masuk Anda.";
+  if (m.includes("signups not allowed")) return "Pendaftaran sedang ditutup.";
+  return "Permintaan tidak dapat diproses. Periksa kembali data Anda.";
 }

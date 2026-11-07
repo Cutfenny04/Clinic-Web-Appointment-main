@@ -182,7 +182,8 @@ describe("RBAC & Auth Guard — Endpoint yang dilindungi", () => {
   });
 });
 
-describe("Public Endpoints", () => {
+// Butuh koneksi ke Supabase sungguhan: jalankan dengan RUN_SUPABASE_TESTS=1
+describe("Public Endpoints (integrasi Supabase)", { skip: !process.env.RUN_SUPABASE_TESTS && "set RUN_SUPABASE_TESTS=1 untuk menjalankan" }, () => {
   it("GET /api/v1/doctors harus mengembalikan 200", async () => {
     const { status, body } = await fetchJson("/api/v1/doctors");
     assert.equal(status, 200);

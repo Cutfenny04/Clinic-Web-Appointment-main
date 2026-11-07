@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
+import { optionalAuth } from "../../middleware/optionalAuth.js";
 import { validate } from "../../middleware/validate.js";
 import { createScheduleSchema, updateScheduleSchema } from "./schedules.validation.js";
 import {
@@ -17,13 +18,13 @@ const router = Router();
  * GET /api/v1/schedules
  * Publik — melihat seluruh jadwal praktik dokter
  */
-router.get("/", getSchedules);
+router.get("/", optionalAuth, getSchedules);
 
 /**
  * GET /api/v1/schedules/doctor/:doctorId
  * Publik — melihat jadwal praktik dokter tertentu
  */
-router.get("/doctor/:doctorId", getDoctorSchedules);
+router.get("/doctor/:doctorId", optionalAuth, getDoctorSchedules);
 
 /**
  * POST /api/v1/schedules

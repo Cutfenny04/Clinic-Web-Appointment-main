@@ -1,6 +1,44 @@
 # Dokumentasi API JanjiCare
 
-Prefix URL: `http://localhost:3000/api/v1`
+Prefix URL: `http://localhost:3000/api/v1` · Semua pesan berbahasa Indonesia · Header auth: `Authorization: Bearer <access_token Supabase>`
+
+## Ringkasan endpoint (versi terbaru)
+
+| Method | Endpoint | Akses | Keterangan |
+|---|---|---|---|
+| POST | `/auth/register` | Publik | Selalu membuat role `patient` (field `role` diabaikan; dipaksa juga oleh trigger DB) |
+| GET | `/auth/me` | Login | Profil + role dari tabel `profiles` |
+| PUT | `/auth/profile` | Login | `full_name`, `phone` |
+| GET | `/admin/stats` | admin | Statistik dasbor (RPC `admin_dashboard_stats`) |
+| GET | `/admin/reports?from&to` | admin | Rekap per hari / dokter / status |
+| GET | `/users?role=patient&search=` | admin | Daftar pengguna + ringkasan janji temu |
+| PATCH | `/users/:id/status` | admin | `{ is_active }` aktif/nonaktifkan akun |
+| GET | `/doctors` · `/doctors/:id` · `/doctors/:id/schedules` | Publik (admin melihat data lengkap) | |
+| POST | `/doctors` | admin | Buat akun dokter baru (`email,password,full_name,specialty,...`) — butuh `SUPABASE_SERVICE_ROLE_KEY` |
+| PUT | `/doctors/:id` | admin / dokter ybs | Profil & detail praktik; `is_active` hanya admin |
+| DELETE | `/doctors/:id` | admin | Nonaktifkan (soft delete); ditolak bila ada janji temu aktif |
+| GET | `/schedules?doctor_id&date&from&to&upcoming&mine` | Publik | Termasuk `booked_count`, `remaining`, `is_full` |
+| POST/PUT/DELETE | `/schedules[/:id]` | admin / dokter (miliknya) | Cek tabrakan jadwal, tanggal lampau, kapasitas ≥ booking aktif |
+| POST | `/appointments` | patient | Booking atomik (RPC `book_appointment_atomic`) |
+| GET | `/appointments/mine` | patient | |
+| GET | `/appointments?status&date&from&to&doctor_id&patient_id` | admin / dokter (miliknya) | |
+| GET | `/appointments/:id` | peserta / admin | Termasuk `status_history` |
+| PATCH | `/appointments/:id/cancel` | patient / doctor / admin | `{ reason }`; pasien ≥ 1 jam sebelum praktik |
+| PATCH | `/appointments/:id/status` | admin / doctor | `{ status, note?, diagnosis?, consultation_notes? }` lewat RPC `transition_appointment` |
+| POST | `/appointments/:id/check-in` | admin / patient (hari praktik) | Check-in + buat nomor antrean (idempoten) |
+| GET | `/queue/display` | Publik | Data layar TV (tanpa nama lengkap pasien) |
+| GET | `/queue/mine` | patient | Tiket + posisi antrean |
+| GET | `/queue/today?doctor_id` | doctor / admin | Tiket & statistik hari ini |
+| POST | `/queue/call` | doctor / admin | Panggil berikutnya (yang tidak hadir → `skipped`) |
+| PATCH | `/queue/:ticketId/status` | doctor (miliknya) / admin | `waiting|calling|serving|done|skipped` |
+
+Alur status janji temu: `pending → confirmed → checked_in → in_progress → completed` (serta `→ cancelled` dari pending/confirmed/checked_in). Transisi lain ditolak oleh database (kode `P0020`).
+
+Queue Microservice (`:3002/api/v1/queue`) bersifat **internal** dan mewajibkan header `X-Internal-Token`; frontend tidak memanggilnya langsung.
+
+---
+
+## Detail endpoint (dokumentasi awal)
 
 ---
 

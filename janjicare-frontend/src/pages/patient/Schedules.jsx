@@ -2,7 +2,7 @@ import { useState, useEffect, Fragment } from "react";
 import SidebarLayout from "@/layouts/SidebarLayout";
 import { Head, useForm, router } from "@inertiajs/react";
 import { Dialog, Transition } from "@headlessui/react";
-import { formatTime12Hour } from "../../Utils/time";
+import { formatTime12Hour } from "../../utils/time";
 import DoctorDetailsModal from "@/components/DoctorDetailsModal";
 export default function Schedules({ auth, schedules }) {
   const [viewMode, setViewMode] = useState("table");

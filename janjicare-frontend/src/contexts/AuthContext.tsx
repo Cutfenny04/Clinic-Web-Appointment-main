@@ -1,301 +1,163 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
 import { supabase } from "../lib/supabase";
+import { apiService, setSessionExpiredHandler } from "../services/api";
+
+export type Role = "admin" | "doctor" | "patient";
 
 export interface UserProfile {
   id: string;
   name: string;
-  full_name?: string;
+  full_name: string;
   email: string;
-  role: "admin" | "doctor" | "patient";
+  role: Role;
   phone?: string | null;
-  avatar?: string | null;
   avatar_url?: string | null;
+  is_active?: boolean;
 }
 
-export const DEMO_USERS: Record<string, UserProfile> = {
-  admin: {
-    id: "00000000-0000-0000-0000-000000000001",
-    name: "Administrator JanjiCare",
-    full_name: "Administrator JanjiCare",
-    email: "admin@janjicare.com",
-    role: "admin",
-    phone: "+62 812-3456-7890",
-  },
-  doctor: {
-    id: "00000000-0000-0000-0000-000000000002",
-    name: "dr. Sarah Jenkins, Sp.A",
-    full_name: "dr. Sarah Jenkins, Sp.A",
-    email: "doctor@janjicare.com",
-    role: "doctor",
-    phone: "+62 813-9876-5432",
-  },
-  patient: {
-    id: "00000000-0000-0000-0000-000000000003",
-    name: "Budi Santoso",
-    full_name: "Budi Santoso",
-    email: "patient@janjicare.com",
-    role: "patient",
-    phone: "+62 856-7890-1234",
-  },
-};
+type Status = "loading" | "authenticated" | "unauthenticated";
 
 interface AuthContextType {
   user: UserProfile | null;
-  role: "admin" | "doctor" | "patient";
-  token: string | null;
+  role: Role | null;
+  status: Status;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (emailOrRole?: string, password?: string) => Promise<UserProfile>;
-  register: (payload: {
-    email: string;
-    password: string;
-    full_name: string;
-    phone?: string;
-  }) => Promise<any>;
+  sessionExpired: boolean;
+  login: (email: string, password: string) => Promise<UserProfile>;
+  register: (payload: { email: string; password: string; full_name: string; phone?: string }) => Promise<{ needsConfirmation: boolean }>;
   logout: () => Promise<void>;
-  switchRole: (role: "admin" | "doctor" | "patient") => void;
+  refreshUser: () => Promise<UserProfile | null>;
 }
+
+export const DASHBOARD_BY_ROLE: Record<Role, string> = {
+  admin: "/admin/dashboard",
+  doctor: "/doctor/dashboard",
+  patient: "/patient/dashboard",
+};
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function translateSupabaseError(message = ""): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials")) return "Email atau kata sandi salah.";
+  if (m.includes("email not confirmed")) return "Email belum dikonfirmasi. Periksa kotak masuk Anda.";
+  if (m.includes("rate limit") || m.includes("too many")) return "Terlalu banyak percobaan masuk. Coba lagi nanti.";
+  if (m.includes("fetch") || m.includes("network")) return "Tidak dapat terhubung ke layanan autentikasi.";
+  return "Gagal masuk. Periksa kembali email dan kata sandi Anda.";
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(() => {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [status, setStatus] = useState<Status>("loading");
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const loadingProfile = useRef<Promise<UserProfile | null> | null>(null);
+
+  const clear = useCallback(() => {
+    setUser(null);
+    setStatus("unauthenticated");
+    // bersihkan sisa penyimpanan mode demo lama
     try {
-      const saved = localStorage.getItem("janjicare_user");
-      return saved ? JSON.parse(saved) : DEMO_USERS.admin;
-    } catch {
-      return DEMO_USERS.admin;
+      localStorage.removeItem("janjicare_user");
+      localStorage.removeItem("janjicare_auth_token");
+    } catch { /* abaikan */ }
+  }, []);
+
+  /** Role SELALU berasal dari backend (/auth/me → tabel profiles), bukan dari browser. */
+  const refreshUser = useCallback(async () => {
+    if (!loadingProfile.current) {
+      loadingProfile.current = (async () => {
+        try {
+          const res: any = await apiService.auth.me();
+          setUser(res.data);
+          setStatus("authenticated");
+          return res.data as UserProfile;
+        } catch (err: any) {
+          if (err.status === 401 || err.status === 403) {
+            await supabase.auth.signOut().catch(() => {});
+            clear();
+            if (err.status === 403) throw err;
+            return null;
+          }
+          // server tidak dapat dihubungi: jangan tampilkan data, anggap belum masuk
+          clear();
+          throw err;
+        } finally {
+          loadingProfile.current = null;
+        }
+      })();
     }
-  });
+    return loadingProfile.current;
+  }, [clear]);
 
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem("janjicare_auth_token") || "demo_token_123";
-  });
-
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Sync Supabase Auth session on mount
   useEffect(() => {
     let mounted = true;
-
-    async function initSession() {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (session && mounted) {
-          setToken(session.access_token);
-          localStorage.setItem("janjicare_auth_token", session.access_token);
-
-          // Ambil profil dari Supabase table profiles
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id, full_name, role, created_at")
-            .eq("id", session.user.id)
-            .single();
-
-          const mappedUser: UserProfile = {
-            id: session.user.id,
-            email: session.user.email || "",
-            name: profile?.full_name || session.user.user_metadata?.full_name || "User JanjiCare",
-            full_name: profile?.full_name || session.user.user_metadata?.full_name || "User JanjiCare",
-            role: (profile?.role as any) || "patient",
-          };
-
-          setUser(mappedUser);
-          localStorage.setItem("janjicare_user", JSON.stringify(mappedUser));
-        }
-      } catch (err) {
-        console.warn("[AuthContext] Supabase initSession error:", err);
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    }
-
-    initSession();
-
-    // Listen to Supabase auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        setToken(session.access_token);
-        localStorage.setItem("janjicare_auth_token", session.access_token);
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, full_name, role, created_at")
-          .eq("id", session.user.id)
-          .single();
-
-        const mappedUser: UserProfile = {
-          id: session.user.id,
-          email: session.user.email || "",
-          name: profile?.full_name || session.user.user_metadata?.full_name || "User JanjiCare",
-          full_name: profile?.full_name || session.user.user_metadata?.full_name || "User JanjiCare",
-          role: (profile?.role as any) || "patient",
-        };
-
-        setUser(mappedUser);
-        localStorage.setItem("janjicare_user", JSON.stringify(mappedUser));
-      } else if (event === "SIGNED_OUT") {
-        // Hanya reset jika sebelumnya bukan mode demo statis
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem("janjicare_auth_token");
-        localStorage.removeItem("janjicare_user");
-      }
+    setSessionExpiredHandler(() => {
+      setSessionExpired(true);
+      supabase.auth.signOut().catch(() => {});
+      clear();
     });
 
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!mounted) return;
+      if (data.session) await refreshUser().catch(() => {});
+      else clear();
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") clear();
+    });
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      setSessionExpiredHandler(null as any);
     };
+  }, [clear, refreshUser]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    setSessionExpired(false);
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    if (error) throw new Error(translateSupabaseError(error.message));
+    const profile = await refreshUser();
+    if (!profile) throw new Error("Profil pengguna tidak ditemukan. Hubungi admin klinik.");
+    return profile;
+  }, [refreshUser]);
+
+  const register = useCallback(async (payload: { email: string; password: string; full_name: string; phone?: string }) => {
+    // Backend memvalidasi input; database memaksa role 'patient' untuk registrasi publik.
+    const res: any = await apiService.auth.register(payload);
+    const session = res?.data?.session;
+    if (session?.access_token) {
+      return { needsConfirmation: false };
+    }
+    return { needsConfirmation: true };
   }, []);
 
-  const login = async (emailOrRole = "admin", password?: string): Promise<UserProfile> => {
-    const lower = String(emailOrRole).toLowerCase();
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut().catch(() => {});
+    clear();
+  }, [clear]);
 
-    // Quick demo login support
-    if (["admin", "doctor", "patient"].includes(lower) && !password) {
-      const targetUser = DEMO_USERS[lower];
-      setUser(targetUser);
-      const fakeToken = "demo_token_" + Date.now();
-      setToken(fakeToken);
-      localStorage.setItem("janjicare_auth_token", fakeToken);
-      localStorage.setItem("janjicare_user", JSON.stringify(targetUser));
-      return targetUser;
-    }
+  const value = useMemo<AuthContextType>(() => ({
+    user,
+    role: user?.role ?? null,
+    status,
+    isAuthenticated: status === "authenticated" && !!user,
+    isLoading: status === "loading",
+    sessionExpired,
+    login,
+    register,
+    logout,
+    refreshUser,
+  }), [user, status, sessionExpired, login, register, logout, refreshUser]);
 
-    // Real Supabase Auth login
-    if (password) {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailOrRole,
-        password,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (data.session) {
-        setToken(data.session.access_token);
-        localStorage.setItem("janjicare_auth_token", data.session.access_token);
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, full_name, role, created_at")
-          .eq("id", data.user.id)
-          .single();
-
-        const loggedInUser: UserProfile = {
-          id: data.user.id,
-          email: data.user.email || emailOrRole,
-          name: profile?.full_name || "User JanjiCare",
-          full_name: profile?.full_name || "User JanjiCare",
-          role: (profile?.role as any) || "patient",
-        };
-
-        setUser(loggedInUser);
-        localStorage.setItem("janjicare_user", JSON.stringify(loggedInUser));
-        return loggedInUser;
-      }
-    }
-
-    // Fallback default
-    setUser(DEMO_USERS.admin);
-    return DEMO_USERS.admin;
-  };
-
-  const register = async ({
-    email,
-    password,
-    full_name,
-    phone,
-  }: {
-    email: string;
-    password: string;
-    full_name: string;
-    phone?: string;
-  }) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name,
-          phone: phone || null,
-        },
-      },
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return data;
-  };
-
-  const logout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.warn("Supabase signOut error:", err);
-    }
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem("janjicare_auth_token");
-    localStorage.removeItem("janjicare_user");
-  };
-
-  const switchRole = (newRole: "admin" | "doctor" | "patient") => {
-    if (DEMO_USERS[newRole]) {
-      setUser(DEMO_USERS[newRole]);
-      localStorage.setItem("janjicare_user", JSON.stringify(DEMO_USERS[newRole]));
-    }
-  };
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user: user || DEMO_USERS.admin,
-        role: user?.role || "admin",
-        token,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        register,
-        logout,
-        switchRole,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  return (
-    context || {
-      user: DEMO_USERS.admin,
-      role: "admin",
-      token: "demo_token_123",
-      isAuthenticated: true,
-      isLoading: false,
-      login: async () => DEMO_USERS.admin,
-      register: async () => {},
-      logout: async () => {},
-      switchRole: () => {},
-    }
-  );
+export function useAuth(): AuthContextType {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth harus dipakai di dalam <AuthProvider>.");
+  return ctx;
 }
 
 export default AuthContext;

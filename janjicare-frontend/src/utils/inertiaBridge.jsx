@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
 /**
@@ -19,8 +19,7 @@ export const Link = React.forwardRef(({ href, to, children, className, method, a
       e.preventDefault();
 
       if (target === '/logout' || target.includes('logout')) {
-        logout();
-        navigate('/login');
+        logout().then(() => navigate('/login', { replace: true }));
       } else {
         navigate(target, { replace });
       }
@@ -67,12 +66,7 @@ export function usePage() {
     url: location.pathname + location.search,
     props: {
       auth: {
-        user: auth?.user || {
-          id: 1,
-          name: 'Demo Admin',
-          email: 'admin@janjicare.com',
-          role: 'admin',
-        },
+        user: auth?.user || null,
       },
       flash: {},
       errors: {},
@@ -137,21 +131,8 @@ export function useForm(initialValues = {}) {
     setErrors({});
     if (options.onStart) options.onStart();
 
-    // Special case for Login/Logout demo flow
-    if (url === '/login' || url.includes('/login')) {
-      const email = data.email || 'admin@janjicare.com';
-      const user = auth.login(email);
-      setProcessing(false);
-      setWasSuccessful(true);
-      if (options.onSuccess) options.onSuccess({ user });
-      if (user.role === 'admin') navigate('/admin/dashboard');
-      else if (user.role === 'doctor') navigate('/doctor/dashboard');
-      else navigate('/patient/dashboard');
-      return;
-    }
-
     if (url === '/logout' || url.includes('/logout')) {
-      auth.logout();
+      await auth.logout();
       setProcessing(false);
       setWasSuccessful(true);
       if (options.onSuccess) options.onSuccess();
@@ -173,7 +154,7 @@ export function useForm(initialValues = {}) {
       if (options.onSuccess) options.onSuccess(response);
       return response;
     } catch (err) {
-      const responseErrors = err?.response?.data?.errors || { general: err.message || 'Operation failed' };
+      const responseErrors = { general: err.message || 'Permintaan gagal diproses.' };
       setErrors(responseErrors);
       if (options.onError) options.onError(responseErrors);
     } finally {

@@ -1,38 +1,79 @@
-import route from '@/utils/route';
-import Checkbox from "@/components/Checkbox";
 import InputError from "@/components/InputError";
 import InputLabel from "@/components/InputLabel";
 import TextInput from "@/components/TextInput";
 import GuestLayout from "@/layouts/GuestLayout";
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Link } from "react-router-dom";
+import Head from "@/components/Head";
 import { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useAuth, DASHBOARD_BY_ROLE } from "@/contexts/AuthContext";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Shield, Stethoscope, User, ArrowRight } from "lucide-react";
 
-export default function Login({ status, canResetPassword = true }) {
-  const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
+// Masuk cepat HANYA di mode pengembangan dan memakai akun uji sungguhan (bukan pengguna palsu).
+// Isi di .env.local: VITE_DEMO_ADMIN_EMAIL, VITE_DEMO_DOCTOR_EMAIL, VITE_DEMO_PATIENT_EMAIL, VITE_DEMO_PASSWORD
+const DEMO_ACCOUNTS = import.meta.env.DEV && import.meta.env.VITE_DEMO_PASSWORD
+  ? {
+      admin: import.meta.env.VITE_DEMO_ADMIN_EMAIL,
+      doctor: import.meta.env.VITE_DEMO_DOCTOR_EMAIL,
+      patient: import.meta.env.VITE_DEMO_PATIENT_EMAIL,
+    }
+  : null;
 
-  const { data, setData, post, processing, errors, reset } = useForm({
-    email: "",
-    password: "",
-    remember: false
-  });
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Hanya izinkan redirect internal yang sesuai role pengguna */
+function safeNext(next, role) {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return null;
+  const prefix = { admin: "/admin", doctor: "/doctor", patient: "/patient" }[role];
+  return next.startsWith(prefix) || next.startsWith("/profile") ? next : null;
+}
+
+export default function Login() {
+  const [showPassword, setShowPassword] = useState(false);
+  const { login, sessionExpired } = useAuth();
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const [data, setFormData] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({});
+  const [processing, setProcessing] = useState(false);
+  const setData = (k, v) => setFormData((d) => ({ ...d, [k]: v }));
+
+  const status = params.get("reset")
+    ? "Kata sandi berhasil diubah. Silakan masuk dengan kata sandi baru."
+    : params.get("registered")
+    ? "Pendaftaran berhasil. Silakan masuk dengan akun Anda."
+    : params.get("confirm")
+      ? "Pendaftaran berhasil. Periksa email Anda untuk konfirmasi sebelum masuk."
+      : sessionExpired || params.get("expired")
+        ? "Sesi Anda telah berakhir. Silakan masuk kembali."
+        : null;
+
+  const doLogin = async (email, password) => {
+    setProcessing(true);
+    setErrors({});
+    try {
+      const user = await login(email, password);
+      navigate(safeNext(params.get("next"), user.role) || DASHBOARD_BY_ROLE[user.role], { replace: true });
+    } catch (err) {
+      setErrors({ general: err.message });
+      setFormData((d) => ({ ...d, password: "" }));
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   const submit = (e) => {
     e.preventDefault();
-    post(route("login"), {
-      onFinish: () => reset("password")
-    });
+    const v = {};
+    if (!data.email.trim()) v.email = "Email wajib diisi.";
+    else if (!EMAIL_RE.test(data.email.trim())) v.email = "Format email tidak valid.";
+    if (!data.password) v.password = "Kata sandi wajib diisi.";
+    if (Object.keys(v).length) return setErrors(v);
+    doLogin(data.email, data.password);
   };
 
   const handleQuickLogin = (role) => {
-    const user = login(role);
-    if (user.role === 'admin') navigate('/admin/dashboard');
-    else if (user.role === 'doctor') navigate('/doctor/dashboard');
-    else navigate('/patient/dashboard');
+    if (DEMO_ACCOUNTS?.[role]) doLogin(DEMO_ACCOUNTS[role], import.meta.env.VITE_DEMO_PASSWORD);
   };
 
   return (
@@ -47,16 +88,23 @@ export default function Login({ status, canResetPassword = true }) {
         </div>
       )}
 
-      {/* Quick Demo Switcher — Hanya ditampilkan pada mode pengembangan */}
-      {import.meta.env.DEV && (
+      {errors.general && (
+        <div role="alert" className="mb-4 text-sm font-medium text-rose-700 bg-rose-50 dark:bg-rose-900/20 dark:text-rose-300 p-3 rounded-lg border border-rose-100 dark:border-rose-800/40">
+          {errors.general}
+        </div>
+      )}
+
+      {/* Masuk cepat — hanya mode pengembangan + akun uji yang dikonfigurasi */}
+      {DEMO_ACCOUNTS && (
         <div className="mb-6 p-4 rounded-2xl bg-teal-50/70 dark:bg-slate-800/60 border border-teal-200/50 dark:border-slate-700">
           <p className="text-xs font-bold text-teal-800 dark:text-teal-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-            <span>⚡ MASUK CEPAT DEMO:</span>
+            <span>⚡ Masuk cepat (akun uji, khusus pengembangan)</span>
           </p>
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => handleQuickLogin('admin')}
+              disabled={processing || !DEMO_ACCOUNTS.admin}
               className="flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-slate-700/80 hover:bg-teal-500 hover:text-white dark:hover:bg-teal-600 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition-all group"
             >
               <Shield className="w-4 h-4 mb-1 text-teal-600 dark:text-teal-400 group-hover:text-white" />
@@ -65,6 +113,7 @@ export default function Login({ status, canResetPassword = true }) {
             <button
               type="button"
               onClick={() => handleQuickLogin('doctor')}
+              disabled={processing || !DEMO_ACCOUNTS.doctor}
               className="flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-slate-700/80 hover:bg-blue-500 hover:text-white dark:hover:bg-blue-600 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition-all group"
             >
               <Stethoscope className="w-4 h-4 mb-1 text-blue-600 dark:text-blue-400 group-hover:text-white" />
@@ -73,6 +122,7 @@ export default function Login({ status, canResetPassword = true }) {
             <button
               type="button"
               onClick={() => handleQuickLogin('patient')}
+              disabled={processing || !DEMO_ACCOUNTS.patient}
               className="flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-slate-700/80 hover:bg-emerald-500 hover:text-white dark:hover:bg-emerald-600 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition-all group"
             >
               <User className="w-4 h-4 mb-1 text-emerald-600 dark:text-emerald-400 group-hover:text-white" />
@@ -82,7 +132,7 @@ export default function Login({ status, canResetPassword = true }) {
         </div>
       )}
 
-      <form onSubmit={submit} className="space-y-5">
+      <form onSubmit={submit} className="space-y-5" noValidate>
         <div>
           <InputLabel
             htmlFor="email"
@@ -141,40 +191,24 @@ export default function Login({ status, canResetPassword = true }) {
           <InputError message={errors.password} className="mt-2" />
         </div>
 
-        <div className="block">
-          <label className="flex items-center">
-            <Checkbox
-              name="remember"
-              checked={data.remember}
-              onChange={(e) => setData("remember", e.target.checked)}
-              className="text-teal-600 focus:ring-teal-500 rounded"
-            />
-            <span className="ms-2 text-sm text-gray-600 dark:text-gray-300 font-medium">
-              Ingat saya
-            </span>
-          </label>
-        </div>
-
         <div className="flex flex-col space-y-4 pt-2">
           <button
             disabled={processing}
             className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-full shadow-[0_4px_14px_0_rgb(20,184,166,0.39)] text-sm font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 hover:shadow-[0_6px_20px_rgba(20,184,166,0.23)] hover:scale-[1.02] outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 transition-all cursor-pointer"
           >
-            <span>Masuk</span>
+            <span>{processing ? "Memproses..." : "Masuk"}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
 
           <div className="flex items-center justify-between mt-2">
-            {canResetPassword && (
-              <Link
-                href={route("password.request")}
-                className="text-sm text-teal-600 font-semibold hover:text-teal-500 transition-all"
-              >
-                Lupa kata sandi?
-              </Link>
-            )}
             <Link
-              href={route("register")}
+              to="/forgot-password"
+              className="text-sm text-teal-600 font-semibold hover:text-teal-500 transition-all"
+            >
+              Lupa kata sandi?
+            </Link>
+            <Link
+              to="/register"
               className="text-sm text-gray-500 dark:text-gray-400 font-medium hover:text-gray-900 dark:hover:text-white transition-all"
             >
               Belum punya akun? <span className="text-teal-600 font-bold hover:underline">Daftar</span>

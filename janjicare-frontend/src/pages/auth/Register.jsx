@@ -1,437 +1,124 @@
-import route from '@/utils/route';
 import { useState } from "react";
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
 import InputError from "@/components/InputError";
 import InputLabel from "@/components/InputLabel";
 import TextInput from "@/components/TextInput";
-import CustomDatePicker from "@/components/CustomDatePicker";
 import GuestLayout from "@/layouts/GuestLayout";
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Link } from "react-router-dom";
+import Head from "@/components/Head";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import { useAuth, DASHBOARD_BY_ROLE } from "@/contexts/AuthContext";
+
+/**
+ * Registrasi publik — SELALU membuat akun pasien.
+ * Tidak ada pilihan role; database memaksa role 'patient' (trigger handle_new_user).
+ * Akun dokter/admin dibuat oleh admin klinik.
+ */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^(\+62|62|0)[0-9]{8,13}$/;
+const inputClass =
+  "mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm";
 
 export default function Register() {
-  const [step, setStep] = useState(1);
+  const { register, login } = useAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const { data, setData, post, processing, errors, reset } = useForm({
-    name: "",
-    email: "",
-    password: "",
-    password_confirmation: "",
-    tel: "",
-    nic: "",
-    dob: "",
-    address: "",
-    gender: "",
-    blood_group: "",
-    allergies: "",
-    medical_conditions: ""
-  });
+  const [processing, setProcessing] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [data, setForm] = useState({ full_name: "", email: "", phone: "", password: "", password_confirmation: "" });
+  const setData = (k, v) => setForm((d) => ({ ...d, [k]: v }));
 
-  const nextStep = () => setStep((prev) => Math.min(prev + 1, 4));
-  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
+  const validate = () => {
+    const e = {};
+    if (data.full_name.trim().length < 3) e.full_name = "Nama lengkap minimal 3 karakter.";
+    if (!EMAIL_RE.test(data.email.trim())) e.email = "Format email tidak valid.";
+    if (data.phone && !PHONE_RE.test(data.phone.replace(/[\s-]/g, ""))) e.phone = "Nomor telepon diawali 08, 62, atau +62 (10–15 digit).";
+    if (data.password.length < 8) e.password = "Kata sandi minimal 8 karakter.";
+    if (data.password !== data.password_confirmation) e.password_confirmation = "Konfirmasi kata sandi tidak sama.";
+    return e;
+  };
 
-  const submit = (e) => {
-    e.preventDefault();
-    if (step < 4) {
-      nextStep();
-    } else {
-      post(route("register"), {
-        onFinish: () => reset("password", "password_confirmation")
+  const submit = async (ev) => {
+    ev.preventDefault();
+    const v = validate();
+    setErrors(v);
+    if (Object.keys(v).length) return;
+    setProcessing(true);
+    try {
+      const { needsConfirmation } = await register({
+        full_name: data.full_name.trim(),
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
+        phone: data.phone.replace(/[\s-]/g, "") || undefined,
       });
+      if (needsConfirmation) return navigate("/login?confirm=1", { replace: true });
+      const user = await login(data.email, data.password);
+      navigate(DASHBOARD_BY_ROLE[user.role], { replace: true });
+    } catch (err) {
+      const fieldErrors = Object.fromEntries((err.errors || []).map((x) => [x.field, x.message]));
+      setErrors({ ...fieldErrors, general: err.message });
+    } finally {
+      setProcessing(false);
     }
   };
 
+  const field = (name, label, props = {}) => (
+    <div>
+      <InputLabel htmlFor={name} value={label} className="font-semibold text-gray-700 dark:text-gray-200" />
+      <TextInput id={name} name={name} value={data[name]} className={inputClass} onChange={(e) => setData(name, e.target.value)} {...props} />
+      <InputError message={errors[name]} className="mt-2" />
+    </div>
+  );
+
   return (
     <GuestLayout
-      title="Buat Akun Baru"
-      description="Bergabunglah bersama JanjiCare untuk memesan dan mengelola jadwal konsultasi dokter dengan mudah."
+      title="Buat Akun Pasien"
+      description="Daftar untuk mencari dokter, membuat janji temu, dan memantau nomor antrean Anda."
     >
       <Head title="Daftar" />
-
-      {/* Indikator Progres */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between relative">
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-100 rounded-full z-0" />
-          <div
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full z-0 transition-all duration-500"
-            style={{ width: `${((step - 1) / 3) * 100}%` }}
-          />
-          {[1, 2, 3, 4].map((num) => (
-            <div
-              key={num}
-              className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                step >= num
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/20"
-                  : "bg-white dark:bg-slate-800 text-gray-400 dark:text-slate-500 border-2 border-gray-200 dark:border-slate-700"
-              }`}
-            >
-              {step > num ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                </svg>
-              ) : (
-                num
-              )}
-            </div>
-          ))}
+      {errors.general && (
+        <div role="alert" className="mb-4 text-sm font-medium text-rose-700 bg-rose-50 dark:bg-rose-900/20 dark:text-rose-300 p-3 rounded-lg border border-rose-100 dark:border-rose-800/40">
+          {errors.general}
         </div>
-        <div className="flex justify-between mt-2 text-[10px] sm:text-xs font-semibold text-gray-400">
-          <span className={step >= 1 ? "text-blue-700 font-bold" : ""}>Akun</span>
-          <span className={step >= 2 ? "text-blue-700 font-bold" : ""}>Pribadi</span>
-          <span className={step >= 3 ? "text-blue-700 font-bold" : ""}>Kontak</span>
-          <span className={step >= 4 ? "text-blue-700 font-bold" : ""}>Medis</span>
-        </div>
-      </div>
-
-      <form onSubmit={submit} className="space-y-4 relative min-h-[250px]">
-        {/* LANGKAH 1: Informasi Akun */}
-        <div className={`${step === 1 ? "block animate-in fade-in slide-in-from-right-4 duration-500" : "hidden"}`}>
-          <h3 className="text-base font-bold text-gray-800 dark:text-white mb-4">Langkah 1: Detail Akun</h3>
-          <div className="space-y-4">
-            <div>
-              <InputLabel htmlFor="name" value="Nama Lengkap" className="font-semibold text-gray-700 dark:text-gray-200" />
-              <TextInput
-                id="name"
-                name="name"
-                value={data.name}
-                placeholder="Masukkan nama lengkap Anda"
-                className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-                autoComplete="name"
-                onChange={(e) => setData("name", e.target.value)}
-                required={step === 1}
-              />
-              <InputError message={errors.name} className="mt-1" />
-            </div>
-
-            <div>
-              <InputLabel htmlFor="email" value="Alamat Email" className="font-semibold text-gray-700 dark:text-gray-200" />
-              <TextInput
-                id="email"
-                type="email"
-                name="email"
-                value={data.email}
-                placeholder="Masukkan alamat email aktif"
-                className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-                autoComplete="username"
-                onChange={(e) => setData("email", e.target.value)}
-                required={step === 1}
-              />
-              <InputError message={errors.email} className="mt-1" />
-            </div>
-
-            <div>
-              <InputLabel htmlFor="password" value="Kata Sandi" className="font-semibold text-gray-700 dark:text-gray-200" />
-              <div className="relative">
-                <TextInput
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={data.password}
-                  placeholder="Minimal 8 karakter"
-                  className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 pr-10 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-                  autoComplete="new-password"
-                  onChange={(e) => setData("password", e.target.value)}
-                  required={step === 1}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 outline-none transition-all"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              <InputError message={errors.password} className="mt-1" />
-            </div>
-
-            <div>
-              <InputLabel htmlFor="password_confirmation" value="Konfirmasi Kata Sandi" className="font-semibold text-gray-700 dark:text-gray-200" />
-              <div className="relative">
-                <TextInput
-                  id="password_confirmation"
-                  type={showPassword ? "text" : "password"}
-                  name="password_confirmation"
-                  value={data.password_confirmation}
-                  placeholder="Ulangi kata sandi"
-                  className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 pr-10 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-                  autoComplete="new-password"
-                  onChange={(e) => setData("password_confirmation", e.target.value)}
-                  required={step === 1}
-                />
-              </div>
-              <InputError message={errors.password_confirmation} className="mt-1" />
-            </div>
-          </div>
-        </div>
-
-        {/* LANGKAH 2: Informasi Pribadi */}
-        <div className={`${step === 2 ? "block animate-in fade-in slide-in-from-right-4 duration-500" : "hidden"}`}>
-          <h3 className="text-base font-bold text-gray-800 dark:text-white mb-4">Langkah 2: Informasi Pribadi</h3>
-          <div className="space-y-4">
-            <div>
-              <InputLabel value="Tanggal Lahir" className="font-semibold text-gray-700 dark:text-gray-200" />
-              <CustomDatePicker
-                value={data.dob}
-                onChange={(val) => setData("dob", val)}
-                placeholder="Pilih Tanggal Lahir"
-                required={step === 2}
-                placement="bottom"
-              />
-              <InputError message={errors.dob} className="mt-1" />
-            </div>
-
-            <div>
-              <InputLabel value="Jenis Kelamin" className="font-semibold text-gray-700 dark:text-gray-200 mb-1" />
-              <Listbox value={data.gender} onChange={(val) => setData("gender", val)}>
-                {({ open }) => (
-                  <div className="relative">
-                    <ListboxButton className="mt-1 flex items-center justify-between w-full px-4 py-3 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm text-left text-sm text-gray-900 dark:text-white outline-none cursor-pointer">
-                      <span className={data.gender ? "text-gray-900 dark:text-white font-medium" : "text-gray-400 dark:text-slate-400"}>
-                        {data.gender === "Male" ? "Laki-laki" : data.gender === "Female" ? "Perempuan" : data.gender || "Pilih Jenis Kelamin"}
-                      </span>
-                      <svg
-                        className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </ListboxButton>
-                    <ListboxOptions className="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl shadow-xl z-20 overflow-hidden py-1 outline-none animate-in fade-in slide-in-from-top-2 duration-200">
-                      {[
-                        { val: "Male", label: "Laki-laki" },
-                        { val: "Female", label: "Perempuan" },
-                        { val: "Other", label: "Lainnya" }
-                      ].map((option) => (
-                        <ListboxOption
-                          key={option.val}
-                          value={option.val}
-                          className={({ active, selected }) =>
-                            `flex items-center justify-between w-full px-4 py-3 text-sm text-left cursor-pointer transition-all ${
-                              selected
-                                ? "bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-bold"
-                                : active
-                                ? "bg-teal-50/50 dark:bg-teal-900/10 text-teal-600 dark:text-teal-400"
-                                : "text-gray-700 dark:text-slate-300"
-                            }`
-                          }
-                        >
-                          {({ selected }) => (
-                            <>
-                              <span>{option.label}</span>
-                              {selected && (
-                                <svg className="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </>
-                          )}
-                        </ListboxOption>
-                      ))}
-                    </ListboxOptions>
-                  </div>
-                )}
-              </Listbox>
-              <InputError message={errors.gender} className="mt-1" />
-            </div>
-
-            <div>
-              <InputLabel htmlFor="nic" value="Nomor Induk Kependudukan (NIK)" className="font-semibold text-gray-700 dark:text-gray-200" />
-              <TextInput
-                id="nic"
-                name="nic"
-                value={data.nic}
-                placeholder="16 digit NIK sesuai KTP"
-                className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-                onChange={(e) => setData("nic", e.target.value)}
-              />
-              <InputError message={errors.nic} className="mt-1" />
-            </div>
-          </div>
-        </div>
-
-        {/* LANGKAH 3: Informasi Kontak */}
-        <div className={`${step === 3 ? "block animate-in fade-in slide-in-from-right-4 duration-500" : "hidden"}`}>
-          <h3 className="text-base font-bold text-gray-800 dark:text-white mb-4">Langkah 3: Informasi Kontak</h3>
-          <div className="space-y-4">
-            <div>
-              <InputLabel htmlFor="tel" value="Nomor Telepon / WhatsApp" className="font-semibold text-gray-700 dark:text-gray-200" />
-              <TextInput
-                id="tel"
-                name="tel"
-                type="tel"
-                value={data.tel}
-                placeholder="Contoh: 081234567890"
-                className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-                onChange={(e) => setData("tel", e.target.value)}
-                required={step === 3}
-              />
-              <InputError message={errors.tel} className="mt-1" />
-            </div>
-
-            <div>
-              <InputLabel htmlFor="address" value="Alamat Domisili" className="font-semibold text-gray-700 dark:text-gray-200" />
-              <TextInput
-                id="address"
-                name="address"
-                value={data.address}
-                placeholder="Masukkan alamat domisili lengkap"
-                className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-                onChange={(e) => setData("address", e.target.value)}
-              />
-              <InputError message={errors.address} className="mt-1" />
-            </div>
-          </div>
-        </div>
-
-        {/* LANGKAH 4: Profil Medis */}
-        <div className={`transition-all duration-500 ${step === 4 ? "block animate-in fade-in slide-in-from-right-4" : "hidden"}`}>
-          <h3 className="text-base font-bold text-gray-800 dark:text-white mb-4">Langkah 4: Profil Medis</h3>
-          <div className="space-y-4">
-            <div>
-              <InputLabel value="Golongan Darah" className="font-semibold text-gray-700 dark:text-gray-200 mb-1" />
-              <Listbox value={data.blood_group} onChange={(val) => setData("blood_group", val)}>
-                {({ open }) => (
-                  <div className="relative">
-                    <ListboxButton className="mt-1 flex items-center justify-between w-full px-4 py-3 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm text-left text-sm text-gray-900 dark:text-white outline-none cursor-pointer">
-                      <span className={data.blood_group ? "text-gray-900 dark:text-white font-medium" : "text-gray-400 dark:text-slate-400"}>
-                        {data.blood_group || "Pilih Golongan Darah (Opsional)"}
-                      </span>
-                      <svg
-                        className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </ListboxButton>
-                    <ListboxOptions className="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl shadow-xl z-20 overflow-hidden py-1 max-h-60 overflow-y-auto outline-none animate-in fade-in slide-in-from-top-2 duration-200">
-                      <ListboxOption
-                        value=""
-                        className={({ active }) =>
-                          `w-full px-4 py-3 text-sm text-left cursor-pointer transition-all ${
-                            active ? "bg-gray-50 dark:bg-slate-700/50 text-gray-900 dark:text-white" : "text-gray-500 dark:text-slate-400"
-                          }`
-                        }
-                      >
-                        Pilih Golongan Darah (Opsional)
-                      </ListboxOption>
-                      {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
-                        <ListboxOption
-                          key={bg}
-                          value={bg}
-                          className={({ active, selected }) =>
-                            `flex items-center justify-between w-full px-4 py-3 text-sm text-left cursor-pointer transition-all ${
-                              selected
-                                ? "bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-bold"
-                                : active
-                                ? "bg-teal-50/50 dark:bg-teal-900/10 text-teal-600 dark:text-teal-400"
-                                : "text-gray-700 dark:text-slate-300"
-                            }`
-                          }
-                        >
-                          {({ selected }) => (
-                            <>
-                              <span>{bg}</span>
-                              {selected && (
-                                <svg className="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </>
-                          )}
-                        </ListboxOption>
-                      ))}
-                    </ListboxOptions>
-                  </div>
-                )}
-              </Listbox>
-              <InputError message={errors.blood_group} className="mt-1" />
-            </div>
-
-            <div>
-              <InputLabel htmlFor="allergies" value="Riwayat Alergi Obat / Makanan" className="font-semibold text-gray-700 dark:text-gray-200" />
-              <TextInput
-                id="allergies"
-                name="allergies"
-                placeholder="Contoh: Penisilin, Seafood (Kosongkan jika tidak ada)"
-                value={data.allergies}
-                className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-                onChange={(e) => setData("allergies", e.target.value)}
-              />
-              <InputError message={errors.allergies} className="mt-1" />
-            </div>
-
-            <div>
-              <InputLabel htmlFor="medical_conditions" value="Kondisi Medis / Riwayat Penyakit" className="font-semibold text-gray-700 dark:text-gray-200" />
-              <TextInput
-                id="medical_conditions"
-                name="medical_conditions"
-                placeholder="Contoh: Asma, Diabetes, Hipertensi (Kosongkan jika tidak ada)"
-                value={data.medical_conditions}
-                className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white backdrop-blur-sm"
-                onChange={(e) => setData("medical_conditions", e.target.value)}
-              />
-              <InputError message={errors.medical_conditions} className="mt-1" />
-            </div>
-          </div>
-        </div>
-
-        {/* Tombol Kontrol Formulir */}
-        <div className="flex gap-3 pt-6 mt-2 border-t border-gray-100">
-          {step > 1 && (
-            <button
-              type="button"
-              onClick={prevStep}
-              className="w-1/3 flex justify-center py-3 px-4 border border-gray-200 dark:border-slate-700 rounded-full shadow-sm text-sm font-bold text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 hover:scale-[1.02] cursor-pointer"
-            >
-              Kembali
+      )}
+      <form onSubmit={submit} className="space-y-5" noValidate>
+        {field("full_name", "Nama Lengkap", { placeholder: "Sesuai kartu identitas", autoComplete: "name", isFocused: true })}
+        {field("email", "Alamat Email", { type: "email", placeholder: "Masukkan alamat email aktif", autoComplete: "email" })}
+        {field("phone", "Nomor Telepon (opsional)", { type: "tel", placeholder: "08xxxxxxxxxx", autoComplete: "tel" })}
+        <div>
+          <InputLabel htmlFor="password" value="Kata Sandi" className="font-semibold text-gray-700 dark:text-gray-200" />
+          <div className="relative">
+            <TextInput
+              id="password" name="password" type={showPassword ? "text" : "password"} value={data.password}
+              placeholder="Minimal 8 karakter" autoComplete="new-password" className={`${inputClass} pr-16`}
+              onChange={(e) => setData("password", e.target.value)}
+            />
+            <button type="button" onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-bold text-gray-400 hover:text-teal-600"
+              aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}>
+              {showPassword ? "Sembunyikan" : "Tampilkan"}
             </button>
-          )}
-          {step < 4 ? (
-            <button
-              type="submit"
-              className={`${
-                step === 1 ? "w-full" : "w-2/3"
-              } flex justify-center items-center py-3.5 px-4 border border-transparent rounded-full shadow-[0_4px_14px_0_rgb(20,184,166,0.39)] dark:shadow-none text-sm font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 hover:shadow-[0_6px_20px_rgba(20,184,166,0.23)] dark:hover:shadow-[0_6px_20px_rgba(20,184,166,0.15)] hover:scale-[1.02] outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 focus:ring-teal-500 cursor-pointer`}
-            >
-              Langkah Berikutnya
-              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={processing}
-              className="w-2/3 flex justify-center items-center py-3.5 px-4 border border-transparent rounded-full shadow-[0_4px_14px_0_rgb(34,197,94,0.39)] dark:shadow-none text-sm font-bold text-white bg-gradient-to-r from-green-500 to-teal-600 hover:shadow-[0_6px_20px_rgba(34,197,94,0.23)] dark:hover:shadow-[0_6px_20px_rgba(34,197,94,0.15)] hover:scale-[1.02] outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 focus:ring-teal-500 disabled:opacity-50 cursor-pointer"
-            >
-              Selesaikan Pendaftaran
-              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </button>
-          )}
+          </div>
+          <InputError message={errors.password} className="mt-2" />
         </div>
+        {field("password_confirmation", "Konfirmasi Kata Sandi", {
+          type: showPassword ? "text" : "password", placeholder: "Ulangi kata sandi", autoComplete: "new-password",
+        })}
 
-        <div className="flex items-center justify-center mt-6">
-          <Link
-            href={route("login")}
-            className="text-sm text-gray-500 dark:text-gray-400 font-medium hover:text-gray-900 dark:hover:text-white transition-all"
-          >
-            Sudah terdaftar? <span className="text-teal-600 dark:text-teal-400 font-semibold hover:text-teal-500 dark:hover:text-teal-300 ml-1">Masuk di sini</span>
-          </Link>
-        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          Akun yang dibuat melalui halaman ini adalah akun <strong>pasien</strong>. Akun dokter dan admin dibuat oleh pengelola klinik.
+        </p>
+
+        <button
+          disabled={processing}
+          className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-full shadow-[0_4px_14px_0_rgb(20,184,166,0.39)] text-sm font-bold text-white bg-gradient-to-r from-teal-500 to-blue-600 hover:scale-[1.02] outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 transition-all cursor-pointer"
+        >
+          <span>{processing ? "Mendaftarkan..." : "Daftar"}</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+          Sudah punya akun? <Link to="/login" className="text-teal-600 font-bold hover:underline">Masuk</Link>
+        </p>
       </form>
     </GuestLayout>
   );

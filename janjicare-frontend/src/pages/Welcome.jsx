@@ -1,8 +1,7 @@
-import route from '@/utils/route';
-import { Head, Link } from "@inertiajs/react";
-import { useEffect, useRef, useState, lazy, Suspense } from "react";
+import { Link } from "react-router-dom";
+import Head from "@/components/Head";
+import { useEffect, useRef, useState } from "react";
 import Lenis from "lenis";
-const AIChatbot = lazy(() => import("@/components/AIChatbot"));
 export default function Welcome({ auth }) {
   const lenisRef = useRef(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -51,17 +50,17 @@ export default function Welcome({ auth }) {
     className="p-2 rounded-full text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors focus:outline-none"
     aria-label="Alihkan Mode Gelap"
   >{isDarkMode ? <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg> : <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>}</button>{auth?.user ? <Link
-    href={route("dashboard")}
+    to="/dashboard"
     className="px-5 py-2.5 rounded-full font-bold bg-slate-900 dark:bg-teal-500 text-white hover:bg-teal-600 dark:hover:bg-teal-400 hover:shadow-[0_4px_14px_0_rgb(20,184,166,0.39)] hover:-translate-y-0.5 transition-all duration-300"
   >
                                     Buka Dasbor
                                 </Link> : <><Link
-    href={route("login")}
+    to="/login"
     className="font-semibold text-slate-600 hover:text-teal-600 dark:text-teal-400 dark:text-slate-300 dark:hover:text-teal-400 px-4 py-2 transition-all hidden sm:block"
   >
                                         Masuk
                                     </Link><Link
-    href={route("register")}
+    to="/register"
     className="px-5 py-2.5 rounded-full font-bold bg-slate-900 dark:bg-teal-500 text-white hover:bg-teal-600 dark:hover:bg-teal-400 hover:shadow-[0_4px_14px_0_rgb(20,184,166,0.39)] hover:-translate-y-0.5 transition-all duration-300 text-sm sm:text-base"
   >
                                         Mulai Sekarang
@@ -75,7 +74,7 @@ export default function Welcome({ auth }) {
                             </span></h1><p className="mt-6 text-lg sm:text-2xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium">
                             Pengalaman pemesanan janji temu medis tanpa hambatan. Pesan instan, pantau riwayat kesehatan, dan terhubung dengan dokter spesialis terbaik dengan mudah.
                         </p><div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center"><Link
-    href={auth?.user ? route("dashboard") : route("register")}
+    to={auth?.user ? "/dashboard" : "/register"}
     className="w-full max-w-[280px] sm:max-w-none sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 rounded-full font-bold text-base sm:text-lg text-center bg-gradient-to-r from-teal-500 to-blue-600 text-white shadow-[0_8px_30px_rgb(20,184,166,0.3)] hover:shadow-[0_8px_30px_rgb(20,184,166,0.5)] hover:scale-105 transition-all duration-300"
   >
                                 Buat Janji Temu
@@ -91,7 +90,7 @@ export default function Welcome({ auth }) {
     /* Footer */
   }<footer className="bg-slate-950 text-slate-400 py-16 relative z-10"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="grid md:grid-cols-4 gap-12 mb-12"><div className="col-span-2"><div className="flex items-center gap-3 mb-6"><div className="w-10 h-10 bg-gradient-to-tr from-teal-400 to-blue-600 dark:from-teal-600 dark:to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
                                         +
-                                    </div><span className="text-2xl font-extrabold tracking-tight text-white">JanjiCare</span></div><p className="text-base max-w-sm leading-relaxed">Modernisasi layanan janji temu klinik. Menghubungkan pasien dengan dokter spesialis terbaik secara cepat dan terpercaya.</p></div><div><h4 className="text-white font-bold text-lg mb-6">Kebijakan & Ketentuan</h4><ul className="space-y-4 text-sm font-medium"><li><a href="#" className="hover:text-teal-400 transition-all">Kebijakan Privasi</a></li><li><a href="#" className="hover:text-teal-400 transition-all">Syarat & Ketentuan</a></li></ul></div><div><h4 className="text-white font-bold text-lg mb-6">Kontak</h4><ul className="space-y-4 text-sm font-medium"><li className="hover:text-teal-400 transition-all cursor-pointer">support@janjicare.com</li><li className="hover:text-teal-400 transition-all cursor-pointer">1-800-JANJICARE</li></ul></div></div><div className="border-t border-slate-800 pt-8 text-sm text-center font-medium">
+                                    </div><span className="text-2xl font-extrabold tracking-tight text-white">JanjiCare</span></div><p className="text-base max-w-sm leading-relaxed">Modernisasi layanan janji temu klinik. Menghubungkan pasien dengan dokter spesialis terbaik secara cepat dan terpercaya.</p></div><div><h4 className="text-white font-bold text-lg mb-6">Tautan</h4><ul className="space-y-4 text-sm font-medium"><li><Link to="/login" className="hover:text-teal-400 transition-all">Masuk</Link></li><li><Link to="/register" className="hover:text-teal-400 transition-all">Daftar Pasien</Link></li><li><Link to="/queue/tv" className="hover:text-teal-400 transition-all">Layar Antrean</Link></li></ul></div><div><h4 className="text-white font-bold text-lg mb-6">Kontak</h4><ul className="space-y-4 text-sm font-medium"><li><a href="mailto:support@janjicare.com" className="hover:text-teal-400 transition-all">support@janjicare.com</a></li></ul></div></div><div className="border-t border-slate-800 pt-8 text-sm text-center font-medium">
                             &copy; {(/* @__PURE__ */ new Date()).getFullYear()} JanjiCare Systems. Hak cipta dilindungi undang-undang.
-                        </div></div></footer><Suspense fallback={null}><AIChatbot isPublic={true} /></Suspense></main></>;
+                        </div></div></footer></main></>;
 }

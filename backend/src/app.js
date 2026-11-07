@@ -14,6 +14,8 @@ import doctorsRoutes from "./modules/doctors/doctors.routes.js";
 import schedulesRoutes from "./modules/schedules/schedules.routes.js";
 import appointmentsRoutes from "./modules/appointments/appointments.routes.js";
 import usersRoutes from "./modules/users/users.routes.js";
+import adminRoutes from "./modules/admin/admin.routes.js";
+import queueRoutes from "./modules/queue/queue.routes.js";
 
 const app = express();
 
@@ -23,7 +25,8 @@ app.use(helmet());
 // ── CORS ──────────────────────────────────────────────────────────
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    // Bisa lebih dari satu origin, pisahkan dengan koma (mis. domain CloudFront/S3 saat di AWS)
+    origin: (process.env.FRONTEND_URL || "http://localhost:5173").split(",").map((o) => o.trim()),
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -31,8 +34,9 @@ app.use(
 );
 
 // ── Body parser ───────────────────────────────────────────────────
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.set("trust proxy", 1); // di belakang ALB/Nginx di AWS
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // ── Request logging (hanya di non-production) ─────────────────────
 if (process.env.NODE_ENV !== "production") {
@@ -45,12 +49,12 @@ if (process.env.NODE_ENV !== "production") {
 // 100 request per 15 menit per IP untuk seluruh API
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: Number(process.env.RATE_LIMIT_MAX || 600),
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    message: "Terlalu banyak request. Coba lagi dalam beberapa menit.",
+    message: "Terlalu banyak permintaan. Coba lagi dalam beberapa menit.",
   },
 });
 
@@ -83,11 +87,15 @@ app.get("/api/health", (req, res) => {
 // ── API v1 Routes ─────────────────────────────────────────────────
 const API_PREFIX = "/api/v1";
 
-app.use(`${API_PREFIX}/auth`, authLimiter, authRoutes);
+// Limiter ketat hanya untuk login & registrasi (bukan /auth/me yang dipanggil tiap halaman dimuat)
+app.use([`${API_PREFIX}/auth/login`, `${API_PREFIX}/auth/register`], authLimiter);
+app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/doctors`, doctorsRoutes);
 app.use(`${API_PREFIX}/schedules`, schedulesRoutes);
 app.use(`${API_PREFIX}/appointments`, appointmentsRoutes);
 app.use(`${API_PREFIX}/users`, usersRoutes);
+app.use(`${API_PREFIX}/admin`, adminRoutes);
+app.use(`${API_PREFIX}/queue`, queueRoutes);
 
 // ── 404 & Error handler (harus paling akhir) ──────────────────────
 app.use(notFound);

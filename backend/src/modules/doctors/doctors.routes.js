@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
+import { optionalAuth } from "../../middleware/optionalAuth.js";
 import { validate } from "../../middleware/validate.js";
 import { createDoctorSchema, updateDoctorSchema } from "./doctors.validation.js";
 import {
@@ -18,19 +19,19 @@ const router = Router();
  * GET /api/v1/doctors
  * Publik — pasien atau pengunjung bisa melihat daftar dokter
  */
-router.get("/", getDoctors);
+router.get("/", optionalAuth, getDoctors);
 
 /**
  * GET /api/v1/doctors/:id
  * Publik — melihat profil dokter
  */
-router.get("/:id", getDoctor);
+router.get("/:id", optionalAuth, getDoctor);
 
 /**
  * GET /api/v1/doctors/:id/schedules
  * Publik — melihat jadwal spesifik seorang dokter
  */
-router.get("/:id/schedules", getDoctorSchedules);
+router.get("/:id/schedules", optionalAuth, getDoctorSchedules);
 
 /**
  * POST /api/v1/doctors

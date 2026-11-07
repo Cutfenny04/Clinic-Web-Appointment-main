@@ -8,7 +8,7 @@
  */
 export function validate(schema) {
   return (req, res, next) => {
-    const result = schema.safeParse(req.body);
+    const result = schema.safeParse(req.body ?? {});
 
     if (!result.success) {
       const issues = result.error.issues || result.error.errors || [];
@@ -19,7 +19,7 @@ export function validate(schema) {
 
       return res.status(400).json({
         success: false,
-        message: "Validasi input gagal.",
+        message: errors[0]?.message || "Data yang dikirim belum valid.",
         errors,
       });
     }

@@ -1,8 +1,6 @@
 import { Transition } from "@headlessui/react";
-import { usePage } from "@inertiajs/react";
 import { useState, useEffect, Fragment, useRef } from "react";
 export default function Toast() {
-  const { flash } = usePage().props;
   const [show, setShow] = useState(false);
   const [message, setMessage] = useState("");
   const [type, setType] = useState("success");
@@ -14,24 +12,6 @@ export default function Toast() {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
-  useEffect(() => {
-    if (flash?.success) {
-      clearTimers();
-      setUndoData(null);
-      setMessage(flash.success);
-      setType("success");
-      setShow(true);
-      timerRef.current = setTimeout(() => setShow(false), 4e3);
-    } else if (flash?.error) {
-      clearTimers();
-      setUndoData(null);
-      setMessage(flash.error);
-      setType("error");
-      setShow(true);
-      timerRef.current = setTimeout(() => setShow(false), 4e3);
-    }
-    return () => clearTimers();
-  }, [flash]);
   useEffect(() => {
     const handleUndoToast = (e) => {
       const { message: msg, onConfirm, onUndo, duration = 6e3 } = e.detail;

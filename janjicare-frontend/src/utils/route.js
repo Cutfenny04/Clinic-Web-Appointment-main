@@ -5,7 +5,7 @@ const routeMap = {
   // Public
   'welcome': '/',
   'home': '/',
-  'dashboard': '/admin/dashboard',
+  'dashboard': '/dashboard',
   'login': '/login',
   'register': '/register',
   'password.request': '/forgot-password',

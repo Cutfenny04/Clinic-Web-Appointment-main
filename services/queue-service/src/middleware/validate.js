@@ -9,7 +9,7 @@ export function validate(schema) {
       }));
       return res.status(400).json({
         success: false,
-        message: "Validasi input gagal.",
+        message: errors[0]?.message || "Data yang dikirim belum valid.",
         errors,
       });
     }

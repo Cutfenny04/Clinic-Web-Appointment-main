@@ -1,17 +1,67 @@
-import route from '@/utils/route';
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { Link, usePage } from "@inertiajs/react";
+import { useState, useEffect, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Toast from "@/components/Toast";
 import Modal from "@/components/Modal";
-import NotificationBell from "@/components/NotificationBell";
-import SessionTimeout from "@/components/SessionTimeout";
+import { useAuth } from "@/contexts/AuthContext";
 
-const AIChatbot = lazy(() => import("@/components/AIChatbot"));
+// Ikon (path SVG) — gaya ikon lama dipertahankan
+const I = {
+  home: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
+  doctors: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
+  patients: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
+  calendar: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+  clipboard: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
+  queue: "M4 6h16M4 10h16M4 14h10M4 18h6",
+  report: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+  settings: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z",
+  stethoscope: "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z",
+  history: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+  user: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+  search: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
+  plus: "M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z",
+  ticket: "M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z",
+};
 
-export default function SidebarLayout({ user: propUser, header: _header, children }) {
-  const page = usePage();
-  const user = propUser || page?.props?.auth?.user || { id: 1, name: 'Admin JanjiCare', role: 'admin' };
-  const role = user?.role || 'admin';
+// Menu sesuai spesifikasi per role (fitur tanpa backend disembunyikan — lihat docs/ROADMAP.md)
+const NAVIGATION = {
+  admin: [
+    { name: "Ringkasan", href: "/admin/dashboard", icon: I.home },
+    { name: "Data Dokter", href: "/admin/doctors", icon: I.doctors },
+    { name: "Data Pasien", href: "/admin/patients", icon: I.patients },
+    { name: "Jadwal Praktik", href: "/admin/schedules", icon: I.calendar },
+    { name: "Janji Temu", href: "/admin/appointments", icon: I.clipboard },
+    { name: "Antrean", href: "/admin/queue", icon: I.queue },
+    { name: "Laporan", href: "/admin/reports", icon: I.report },
+    { name: "Pengaturan", href: "/admin/settings", icon: I.settings },
+  ],
+  doctor: [
+    { name: "Ringkasan", href: "/doctor/dashboard", icon: I.home },
+    { name: "Jadwal Praktik", href: "/doctor/schedules", icon: I.calendar },
+    { name: "Daftar Pasien", href: "/doctor/patients", icon: I.patients },
+    { name: "Antrean Hari Ini", href: "/doctor/queue", icon: I.queue },
+    { name: "Konsultasi", href: "/doctor/consultation", icon: I.stethoscope },
+    { name: "Riwayat Pemeriksaan", href: "/doctor/history", icon: I.history },
+    { name: "Profil Saya", href: "/doctor/profile", icon: I.user },
+  ],
+  patient: [
+    { name: "Beranda", href: "/patient/dashboard", icon: I.home },
+    { name: "Cari Dokter", href: "/patient/doctors", icon: I.search },
+    { name: "Buat Janji Temu", href: "/patient/book", icon: I.plus },
+    { name: "Janji Temu Saya", href: "/patient/appointments", icon: I.clipboard },
+    { name: "Nomor Antrean", href: "/patient/queue", icon: I.ticket },
+    { name: "Riwayat Konsultasi", href: "/patient/history", icon: I.history },
+    { name: "Profil Saya", href: "/patient/profile", icon: I.user },
+  ],
+};
+
+const PROFILE_PATH = { admin: "/admin/settings", doctor: "/doctor/profile", patient: "/patient/profile" };
+
+export default function SidebarLayout({ header: _header, children }) {
+  const location = useLocation();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const role = user?.role;
+  const [loggingOut, setLoggingOut] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -39,7 +89,7 @@ export default function SidebarLayout({ user: propUser, header: _header, childre
     }
   }, [isDarkMode]);
 
-  const { url } = page;
+  const url = location.pathname;
 
   useEffect(() => {
     localStorage.setItem("sidebarCollapsed", JSON.stringify(isCollapsed));
@@ -57,36 +107,7 @@ export default function SidebarLayout({ user: propUser, header: _header, childre
 
   const isVisuallyCollapsed = isCollapsed && !sidebarOpen;
 
-  const navigation = {
-    admin: [
-      { name: "Dasbor", href: route("admin.dashboard"), icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-      { name: "Kelola Dokter", href: route("admin.doctors.index"), icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" },
-      { name: "Kelola Pasien", href: route("admin.patients.index"), icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
-      { name: "Janji Temu", href: route("admin.appointments.index"), icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" },
-      { name: "Kelola Jadwal", href: route("admin.schedules.index"), icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
-      { name: "Laporan", href: route("admin.reports.index"), icon: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
-      { name: "Analisis Statistik", href: route("admin.analytics"), icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
-      { name: "Apotek", href: route("admin.pharmacy.index"), icon: "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" },
-      { name: "Pengaturan AI", href: route("admin.ai"), icon: "M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" },
-      { name: "Keamanan", href: route("admin.security.index"), icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" }
-    ],
-    doctor: [
-      { name: "Dasbor", href: route("doctor.dashboard"), icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-      { name: "Janji Temu Saya", href: route("doctor.appointments.index"), icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
-      { name: "Jadwal Praktik Saya", href: route("doctor.schedules.index"), icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
-      { name: "Riwayat Konsultasi", href: route("doctor.history.index"), icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
-      { name: "Analisis Statistik", href: route("doctor.analytics"), icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" }
-    ],
-    patient: [
-      { name: "Dasbor", href: route("patient.dashboard"), icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-      { name: "Cari Dokter", href: route("patient.doctors.index"), icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" },
-      { name: "Buat Janji Temu", href: route("patient.schedules.index"), icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
-      { name: "Janji Temu Saya", href: route("patient.appointments.index"), icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
-      { name: "Riwayat Medis", href: route("patient.history.index"), icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" }
-    ]
-  };
-
-  const links = navigation[role] || [];
+  const links = NAVIGATION[role] || [];
 
   const roleLabels = {
     admin: "Admin",
@@ -96,7 +117,6 @@ export default function SidebarLayout({ user: propUser, header: _header, childre
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-slate-950 font-sans antialiased text-gray-900 dark:text-slate-100 overflow-hidden transition-all duration-300">
-      <SessionTimeout />
 
       {/* Mobile Sidebar Overlay */}
       <div
@@ -166,7 +186,7 @@ export default function SidebarLayout({ user: propUser, header: _header, childre
             return (
               <Link
                 key={item.name}
-                href={item.href}
+                to={item.href}
                 title={isVisuallyCollapsed ? item.name : undefined}
                 className={`flex items-center rounded-xl transition-all duration-200 group font-medium border relative ${
                   isActive
@@ -188,14 +208,14 @@ export default function SidebarLayout({ user: propUser, header: _header, childre
         {/* Informasi Pengguna & Pengaturan */}
         <div className="p-3 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
           <Link
-            href={route("profile.edit")}
+            to={PROFILE_PATH[role] || "/"}
             title={isVisuallyCollapsed ? "Pengaturan Profil" : undefined}
             className={`flex items-center flex-1 min-w-0 rounded-xl transition-all duration-200 group hover:bg-gray-50 dark:hover:bg-slate-800 ${isVisuallyCollapsed ? "justify-center py-2 px-0" : "gap-3 px-3 py-2"}`}
           >
             <div className={`rounded-full overflow-hidden bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-700 dark:text-blue-400 font-bold group-hover:bg-blue-600 dark:group-hover:bg-blue-500 group-hover:text-white dark:group-hover:text-white transition-all flex-shrink-0 ${isVisuallyCollapsed ? "w-10 h-10" : "w-10 h-10"}`}>
-              {user?.avatar ? (
+              {user?.avatar_url ? (
                 <img
-                  src={`/storage/${user.avatar}`}
+                  src={user.avatar_url}
                   alt={user?.name || "Pengguna"}
                   className="h-full w-full object-cover"
                 />
@@ -275,8 +295,6 @@ export default function SidebarLayout({ user: propUser, header: _header, childre
                 )}
               </div>
 
-              {/* Lonceng Notifikasi */}
-              <NotificationBell compact />
             </div>
           )}
         </div>
@@ -301,9 +319,6 @@ export default function SidebarLayout({ user: propUser, header: _header, childre
       </div>
 
       <Toast />
-      <Suspense fallback={null}>
-        <AIChatbot />
-      </Suspense>
 
       {/* Modal Konfirmasi Keluar */}
       <Modal show={showLogoutModal} onClose={() => setShowLogoutModal(false)} maxWidth="sm">
@@ -317,7 +332,7 @@ export default function SidebarLayout({ user: propUser, header: _header, childre
             Yakin ingin keluar?
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-8 leading-relaxed">
-            Apakah Anda yakin ingin keluar dari akun Anda? Anda harus memasukkan kredensial masuk kembali untuk mengakses portal klinik.
+            Anda perlu memasukkan email dan kata sandi lagi untuk mengakses portal klinik.
           </p>
           <div className="flex gap-3">
             <button
@@ -326,14 +341,18 @@ export default function SidebarLayout({ user: propUser, header: _header, childre
             >
               Batal
             </button>
-            <Link
-              href={route("logout")}
-              method="post"
-              as="button"
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-bold rounded-xl transition-all text-center shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+            <button
+              type="button"
+              disabled={loggingOut}
+              onClick={async () => {
+                setLoggingOut(true);
+                await logout();
+                navigate("/login", { replace: true });
+              }}
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-bold rounded-xl transition-all text-center shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer disabled:opacity-60"
             >
-              Keluar
-            </Link>
+              {loggingOut ? "Keluar..." : "Keluar"}
+            </button>
           </div>
         </div>
       </Modal>

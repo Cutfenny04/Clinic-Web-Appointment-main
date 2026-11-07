@@ -4,6 +4,8 @@ import {
   logoutUser,
   getCurrentUserPayload,
 } from "./auth.service.js";
+import { PROFILE_COLUMNS } from "../../middleware/authenticate.js";
+import { toApiError } from "../../utils/dbError.js";
 
 /**
  * AuthController — mengelola HTTP request & response untuk auth.
@@ -100,26 +102,8 @@ export async function logout(req, res, next) {
  */
 export async function me(req, res, next) {
   try {
-    // req.user dan req.profile sudah di-attach oleh middleware authenticate
-    const { data: profile, error } = await req.supabase
-      .from("profiles")
-      .select("id, full_name, role, created_at")
-      .eq("id", req.user.id)
-      .single();
-
-    if (error || !profile) {
-      return res.status(403).json({
-        success: false,
-        message: "Profil pengguna tidak ditemukan.",
-      });
-    }
-
-    const payload = getCurrentUserPayload(req.user, profile);
-
-    return res.status(200).json({
-      success: true,
-      data: payload,
-    });
+    // Profil sudah diverifikasi & dimuat oleh middleware authenticate
+    return res.status(200).json({ success: true, data: getCurrentUserPayload(req.user, req.profile) });
   } catch (err) {
     next(err);
   }
@@ -142,28 +126,26 @@ export async function updateProfile(req, res, next) {
     const { full_name, phone } = req.body;
     const updates = {};
     if (full_name !== undefined) updates.full_name = full_name;
+    if (phone !== undefined) updates.phone = phone || null;
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, message: "Tidak ada data yang diubah." });
+    }
 
     const { data, error } = await req.supabase
       .from("profiles")
       .update(updates)
       .eq("id", req.user.id)
-      .select("id, full_name, role, created_at")
+      .select(PROFILE_COLUMNS)
       .single();
 
-    if (error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message || "Gagal memperbarui profil.",
-      });
-    }
+    if (error) throw toApiError(error, "Gagal memperbarui profil.");
 
     return res.status(200).json({
       success: true,
       message: "Profil berhasil diperbarui.",
-      data,
+      data: getCurrentUserPayload(req.user, data),
     });
   } catch (err) {
     next(err);
   }
 }
-

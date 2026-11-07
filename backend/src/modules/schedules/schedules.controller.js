@@ -2,7 +2,7 @@ import * as scheduleService from "./schedules.service.js";
 
 export async function getSchedules(req, res, next) {
   try {
-    const schedules = await scheduleService.getSchedulesList(req.supabase, req.query);
+    const schedules = await scheduleService.getSchedulesList(req.supabase, req.query, req.profile);
     res.status(200).json({
       success: true,
       data: schedules,

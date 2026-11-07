@@ -36,18 +36,19 @@ export function formatStatus(status) {
 /**
  * Format tanggal Indonesia lengkap (Contoh: "6 November 2026")
  */
-export function formatDate(dateInput) {
+export function formatDate(dateInput, opts = {}) {
   if (!dateInput) return "";
   try {
-    const d = typeof dateInput === "string" && !dateInput.includes("T") 
-      ? new Date(dateInput + "T00:00:00")
-      : new Date(dateInput);
+    // Tanggal tanpa jam (YYYY-MM-DD) adalah tanggal kalender: jangan digeser zona waktu
+    const dateOnly = typeof dateInput === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateInput);
+    const d = dateOnly ? new Date(dateInput + "T00:00:00Z") : new Date(dateInput);
     if (isNaN(d.getTime())) return String(dateInput);
     return new Intl.DateTimeFormat("id-ID", {
       day: "numeric",
       month: "long",
       year: "numeric",
-      timeZone: "Asia/Jakarta",
+      ...opts,
+      timeZone: dateOnly ? "UTC" : "Asia/Jakarta",
     }).format(d);
   } catch {
     return String(dateInput);
@@ -60,14 +61,13 @@ export function formatDate(dateInput) {
 export function formatDateShort(dateInput) {
   if (!dateInput) return "";
   try {
-    const d = typeof dateInput === "string" && !dateInput.includes("T")
-      ? new Date(dateInput + "T00:00:00")
-      : new Date(dateInput);
+    if (typeof dateInput === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+      const [y, m, dd] = dateInput.split("-");
+      return `${dd}/${m}/${y}`;
+    }
+    const d = new Date(dateInput);
     if (isNaN(d.getTime())) return String(dateInput);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
+    return new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jakarta" }).format(d);
   } catch {
     return String(dateInput);
   }
@@ -78,7 +78,7 @@ export function formatDateShort(dateInput) {
  */
 export function formatTime(timeInput) {
   if (!timeInput) return "";
-  if (typeof timeInput === "string" && timeInput.includes(":")) {
+  if (typeof timeInput === "string" && /^\d{1,2}:\d{2}/.test(timeInput)) {
     const parts = timeInput.split(":");
     const h = parts[0].padStart(2, "0");
     const m = parts[1].padStart(2, "0");
@@ -117,4 +117,50 @@ export function formatCurrency(amount) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(Number(amount));
+}
+
+/** "08:00:00" → "08.00" (tanpa akhiran WIB) */
+export function formatClock(t) {
+  if (!t) return "";
+  const [h, m] = String(t).split(":");
+  return `${h.padStart(2, "0")}.${(m || "00").padStart(2, "0")}`;
+}
+
+/** Rentang jam praktik: "08.00–12.00 WIB" */
+export function formatTimeRange(start, end) {
+  if (!start) return "";
+  return `${formatClock(start)}–${formatClock(end)} WIB`;
+}
+
+/** Tanggal + jam dari timestamp ISO, zona Asia/Jakarta: "8 Nov 2026, 09.15 WIB" */
+export function formatDateTime(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return String(ts);
+  const s = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Jakarta",
+  }).format(d);
+  return `${s.replace(/(\d{2})[.:](\d{2})$/, "$1.$2")} WIB`;
+}
+
+/** Hari dalam seminggu: "Senin, 9 November 2026" */
+export function formatDateLong(dateInput) {
+  return formatDate(dateInput, { weekday: "long" });
+}
+
+/** Tanggal hari ini (YYYY-MM-DD) menurut Asia/Jakarta */
+export function todayJakarta(now = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
+/** Menambah n hari pada tanggal YYYY-MM-DD */
+export function addDays(ymd, n) {
+  const d = new Date(ymd + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Inisial nama: "Budi Santoso" → "BS" */
+export function initials(name = "") {
+  return String(name).replace(/^(dr\.?|drg\.?)\s+/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
 }
