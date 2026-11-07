@@ -46,7 +46,7 @@ api.interceptors.response.use(
     } else if (error.code === "ECONNABORTED") {
       message = "Server terlalu lama merespons. Coba lagi.";
     } else {
-      message = "Tidak dapat terhubung ke server JanjiCare. Periksa koneksi internet Anda.";
+      message = `Tidak dapat terhubung ke backend JanjiCare (${API_BASE_URL}). Pastikan terminal backend berjalan (npm run dev di folder backend).`;
     }
     const err = new Error(message);
     err.status = status || 0;

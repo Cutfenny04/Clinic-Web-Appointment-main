@@ -8,7 +8,8 @@ import assert from "node:assert/strict";
 import http from "node:http";
 
 process.env.QUEUE_INTERNAL_TOKEN = "stub";
-delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+// String kosong (bukan delete) agar dotenv tidak memuat ulang kunci asli dari .env
+process.env.SUPABASE_SERVICE_ROLE_KEY = "";
 
 const { default: app } = await import("../src/app.js");
 const { authDeps } = await import("../src/middleware/authenticate.js");

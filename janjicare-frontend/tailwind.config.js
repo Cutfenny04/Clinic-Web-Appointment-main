@@ -25,8 +25,8 @@ const mauve = {
   950: '#0E0C14',
 };
 const neutral = {
-  50: '#FBF9FA',
-  100: '#F5F1F3',
+  50: '#FAF6F1', // krem hangat (latar halaman)
+  100: '#F3EDE8',
   200: '#E9E2E6',
   300: '#D6CCD2',
   400: '#ADA0A8',
@@ -62,6 +62,7 @@ export default {
       colors: {
         // Nama palet (dapat dipakai langsung)
         ink: '#16131F',
+        cream: '#FAF6F1',
         heather: '#F0D9E4',
         decant: '#C1A0AC',
         plum: '#4A3F4B',

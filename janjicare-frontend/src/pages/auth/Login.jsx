@@ -78,7 +78,7 @@ export default function Login() {
 
   return (
     <GuestLayout
-      title="Selamat Datang Kembali"
+      title="Selamat datang kembali"
       description="Masuk untuk mengakses janji temu dan rekam medis Anda."
     >
       <Head title="Masuk" />
@@ -145,7 +145,7 @@ export default function Login() {
             name="email"
             value={data.email}
             placeholder="Masukkan alamat email"
-            className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white"
+            className="mt-1 block w-full border-gray-300 dark:border-slate-700 rounded-lg py-3 bg-white dark:bg-slate-900 text-ink dark:text-white"
             autoComplete="username"
             isFocused={true}
             onChange={(e) => setData("email", e.target.value)}
@@ -166,7 +166,7 @@ export default function Login() {
               name="password"
               value={data.password}
               placeholder="Masukkan kata sandi"
-              className="mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 pr-10 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white"
+              className="mt-1 block w-full border-gray-300 dark:border-slate-700 rounded-lg py-3 pr-10 bg-white dark:bg-slate-900 text-ink dark:text-white"
               autoComplete="current-password"
               onChange={(e) => setData("password", e.target.value)}
             />
@@ -194,7 +194,7 @@ export default function Login() {
         <div className="flex flex-col space-y-4 pt-2">
           <button
             disabled={processing}
-            className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-md text-sm font-bold text-white bg-blue-700 outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 transition-all cursor-pointer"
+            className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-full text-sm font-semibold text-cream bg-ink hover:bg-plum dark:bg-heather dark:text-ink dark:hover:bg-white disabled:opacity-50 transition-colors cursor-pointer"
           >
             <span>{processing ? "Memproses..." : "Masuk"}</span>
             <ArrowRight className="w-4 h-4" />

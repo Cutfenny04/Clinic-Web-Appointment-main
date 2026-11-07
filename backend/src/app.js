@@ -72,6 +72,17 @@ const authLimiter = rateLimit({
 
 app.use("/api/", globalLimiter);
 
+// ── Halaman akar: info singkat (bukan 404) ──────────────────────
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "JanjiCare API berjalan. Ini adalah server API, bukan tampilan website.",
+    website: process.env.FRONTEND_URL?.split(",")[0] || "http://localhost:5173",
+    health: "/api/health",
+    api: "/api/v1",
+  });
+});
+
 // ── Health check ──────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
   res.status(200).json({

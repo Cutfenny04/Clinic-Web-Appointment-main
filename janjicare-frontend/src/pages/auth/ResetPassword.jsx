@@ -60,7 +60,7 @@ export default function ResetPassword() {
             <TextInput id="confirm" type="password" autoComplete="new-password" className="mt-1 block w-full rounded-xl py-3" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
             <InputError message={errors.confirm} className="mt-2" />
           </div>
-          <button disabled={processing} className="w-full py-3.5 rounded-md text-sm font-bold text-white bg-blue-700 disabled:opacity-50">
+          <button disabled={processing} className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-full text-sm font-semibold text-cream bg-ink hover:bg-plum dark:bg-heather dark:text-ink dark:hover:bg-white disabled:opacity-50 transition-colors cursor-pointer">
             {processing ? "Menyimpan..." : "Simpan Kata Sandi"}
           </button>
         </form>

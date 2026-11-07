@@ -2,61 +2,61 @@ import { Link } from "react-router-dom";
 import Brand from "@/components/Brand";
 import { useState, useEffect } from "react";
 
-export default function GuestLayout({ children, title, description }) {
+/**
+ * Tata letak halaman tamu (masuk, daftar, lupa kata sandi):
+ * form di kiri, foto klinik di kanan (layar lebar). Di ponsel hanya form.
+ */
+export default function GuestLayout({ children, title, description, image = "/image/hospital.jpg" }) {
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      return JSON.parse(localStorage.getItem("darkMode") || "false");
-    }
-    return false;
+    try { return JSON.parse(localStorage.getItem("darkMode") || "false"); } catch { return false; }
   });
 
   useEffect(() => {
-    localStorage.setItem("darkMode", JSON.stringify(isDarkMode));
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    document.documentElement.classList.remove("lenis", "lenis-smooth", "lenis-scrolling", "lenis-stopped");
+    try { localStorage.setItem("darkMode", JSON.stringify(isDarkMode)); } catch { /* abaikan */ }
+    document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative bg-heather/40 dark:bg-slate-950 font-sans">
-      {/* Latar polos dengan garis halus — tanpa efek blur/animasi */}
-      <div className="absolute inset-x-0 top-0 h-1 bg-plum dark:bg-heather pointer-events-none" />
-      <div className="relative z-10 w-full max-w-lg px-4 sm:px-6 py-12 flex flex-col items-center">
-        {/* Dark Mode Toggle */}
-        <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+    <div className="min-h-screen bg-cream dark:bg-slate-950 font-sans lg:grid lg:grid-cols-2">
+      {/* Kolom form */}
+      <div className="flex flex-col min-h-screen px-5 sm:px-10 xl:px-20">
+        <div className="flex items-center justify-between h-20">
+          <Link to="/" aria-label="JanjiCare — beranda"><Brand size={32} textClass="text-2xl" /></Link>
           <button
+            type="button"
             onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2.5 rounded-md bg-white dark:bg-slate-900 text-gray-600 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-slate-800 border border-gray-200 dark:border-slate-800 transition-all focus:outline-none"
-            aria-label="Ganti Mode Gelap"
-            title={isDarkMode ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
+            className="p-2 rounded-full text-gray-500 hover:bg-white dark:text-slate-400 dark:hover:bg-slate-800"
+            aria-label={isDarkMode ? "Gunakan mode terang" : "Gunakan mode gelap"}
           >
-            {isDarkMode ? (
-              <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-            )}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d={isDarkMode
+                ? "M12 3v1m0 16v1m9-9h-1M4 12H3m15.4 6.4l-.7-.7M6.3 6.3l-.7-.7m12.8 0l-.7.7M6.3 17.7l-.7.7M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                : "M20.4 15.4A9 9 0 018.6 3.6 9 9 0 1020.4 15.4z"} />
+            </svg>
           </button>
         </div>
 
-        {/* Logo & Header */}
-        <div className="text-center mb-8 flex flex-col items-center w-full">
-          <Link to="/" className="mb-8" aria-label="JanjiCare — beranda">
-            <Brand size={40} textClass="text-3xl" />
-          </Link>
-          {title && <h1 className="text-3xl sm:text-4xl font-semibold text-ink dark:text-white">{title}</h1>}
-          {description && <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400 mt-3 max-w-sm">{description}</p>}
+        <div className="flex-1 flex items-center py-10">
+          <div className="w-full max-w-md mx-auto">
+            {title && <h1 className="text-4xl sm:text-5xl font-medium leading-tight text-ink dark:text-white">{title}</h1>}
+            {description && <p className="mt-3 text-gray-600 dark:text-slate-400">{description}</p>}
+            <div className="mt-10">{children}</div>
+          </div>
         </div>
 
-        {/* Premium Glassmorphic Card */}
-        <div className="w-full bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-6 sm:p-10">
-          {children}
+        <p className="py-6 text-xs text-gray-400">© {new Date().getFullYear()} JanjiCare</p>
+      </div>
+
+      {/* Kolom foto (hanya layar lebar) */}
+      <div className="hidden lg:block p-4">
+        <div className="relative h-full min-h-[calc(100vh-2rem)] overflow-hidden rounded-[2rem] bg-plum">
+          <img src={image} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-12">
+            <p className="font-serif text-3xl xl:text-4xl leading-snug text-white max-w-md">
+              Janji temu, check-in, dan antrean klinik dalam satu tempat.
+            </p>
+          </div>
         </div>
       </div>
     </div>

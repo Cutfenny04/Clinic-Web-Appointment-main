@@ -16,6 +16,14 @@ if (process.env.NODE_ENV !== "production") {
 
 app.use("/api/v1/queue", queueRoutes);
 
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "JanjiCare Queue Service berjalan. Layanan internal — diakses oleh backend, bukan browser.",
+    health: "/api/v1/queue/health",
+  });
+});
+
 // Root health check
 app.get("/health", (req, res) => {
   res.status(200).json({

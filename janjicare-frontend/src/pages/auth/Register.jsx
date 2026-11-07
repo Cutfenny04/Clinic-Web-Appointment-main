@@ -17,7 +17,7 @@ import { useAuth, DASHBOARD_BY_ROLE } from "@/contexts/AuthContext";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^(\+62|62|0)[0-9]{8,13}$/;
 const inputClass =
-  "mt-1 block w-full border-gray-200/80 dark:border-slate-700/80 rounded-xl shadow-sm py-3 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white";
+  "mt-1 block w-full border-gray-300 dark:border-slate-700 rounded-lg py-3 bg-white dark:bg-slate-900 text-ink dark:text-white";
 
 export default function Register() {
   const { register, login } = useAuth();
@@ -111,7 +111,7 @@ export default function Register() {
 
         <button
           disabled={processing}
-          className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-md text-sm font-bold text-white bg-blue-700 outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 transition-all cursor-pointer"
+          className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-full text-sm font-semibold text-cream bg-ink hover:bg-plum dark:bg-heather dark:text-ink dark:hover:bg-white disabled:opacity-50 transition-colors cursor-pointer"
         >
           <span>{processing ? "Mendaftarkan..." : "Daftar"}</span>
           <ArrowRight className="w-4 h-4" />

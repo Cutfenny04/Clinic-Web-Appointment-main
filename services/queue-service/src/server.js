@@ -12,7 +12,18 @@ if (config.nodeEnv === "production" && (!config.databaseUrl || !config.internalT
 
 const PORT = process.env.PORT || 3002;
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, (err) => {
+  // Express 5 meneruskan error listen (mis. port sudah dipakai) ke callback ini
+  if (err) {
+    if (err.code === "EADDRINUSE") {
+      console.error(`\n✖ Port ${PORT} sudah dipakai proses lain (kemungkinan Queue Service lama masih berjalan).`);
+      console.error(`  Tutup terminal lama, atau jalankan di PowerShell:`);
+      console.error(`  Stop-Process -Id (Get-NetTCPConnection -LocalPort ${PORT}).OwningProcess -Force\n`);
+    } else {
+      console.error("✖ Server gagal dijalankan:", err.message);
+    }
+    process.exit(1);
+  }
   console.log("─────────────────────────────────────────");
   console.log("  🎫 JanjiCare Queue Microservice");
   console.log("─────────────────────────────────────────");
