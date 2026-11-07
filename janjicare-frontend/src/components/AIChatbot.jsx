@@ -12,7 +12,7 @@ export default function AIChatbot({ isPublic = false }) {
   const _GUEST_LIMIT = 20;
   const [isLimitReached, setIsLimitReached] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "ai", text: isLimitReached ? "Welcome back! I would love to continue helping you. To ensure the highest quality of care and protect your privacy, please take a quick moment to register a free account." : "Hi! I am JanjiCare AI. Briefly describe your symptoms and I will recommend a specialist for you." }
+    { role: "ai", text: isLimitReached ? "Selamat datang kembali! Saya siap membantu Anda. Untuk memastikan kualitas layanan dan menjaga privasi Anda, silakan luangkan waktu sejenak untuk mendaftar akun gratis." : "Halo! Saya JanjiCare AI. Ceritakan keluhan atau gejala yang Anda alami secara singkat, dan saya akan merekomendasikan dokter spesialis yang sesuai untuk Anda." }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +39,7 @@ export default function AIChatbot({ isPublic = false }) {
     if (!isPublic) {
       axios.post(route("ai.session.clear")).catch(console.error);
     }
-    setMessages([{ role: "ai", text: "Hi! I am JanjiCare AI. Briefly describe your symptoms and I will recommend a specialist for you." }]);
+    setMessages([{ role: "ai", text: "Halo! Saya JanjiCare AI. Ceritakan keluhan atau gejala yang Anda alami secara singkat, dan saya akan merekomendasikan dokter spesialis yang sesuai untuk Anda." }]);
   };
   useEffect(() => {
     const aiMsgCount = messages.filter((m) => m.role === "ai").length;
@@ -58,7 +58,7 @@ export default function AIChatbot({ isPublic = false }) {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
     if (isLimitReached) {
-      setMessages((prev) => [...prev, { role: "user", text: input.trim() }, { role: "ai", text: "I am so glad I could help you today! To continue our conversation and allow me to connect you with the right specialist, please create a free JanjiCare account. It only takes a minute!" }]);
+      setMessages((prev) => [...prev, { role: "user", text: input.trim() }, { role: "ai", text: "Saya senang dapat membantu Anda hari ini! Untuk melanjutkan percakapan dan menghubungkan Anda dengan dokter spesialis yang tepat, silakan buat akun JanjiCare gratis. Hanya butuh waktu satu menit!" }]);
       setInput("");
       return;
     }
@@ -142,10 +142,10 @@ ${rawText.replace(/\n\s*\n/g, "\n").substring(0, 3e3)}`;
       }
     } catch (error) {
       if (error.message === "429") {
-        setMessages((prev) => [...prev, { role: "ai", text: "I am so glad I could help you today! To continue our conversation and allow me to connect you with the right specialist, please create a free JanjiCare account. It only takes a minute!" }]);
+        setMessages((prev) => [...prev, { role: "ai", text: "Saya senang dapat membantu Anda hari ini! Untuk melanjutkan percakapan dan menghubungkan Anda dengan dokter spesialis yang tepat, silakan buat akun JanjiCare gratis. Hanya butuh waktu satu menit!" }]);
         setIsLimitReached(true);
       } else {
-        setMessages((prev) => [...prev, { role: "ai", text: error.message || "Sorry, I am having trouble connecting right now." }]);
+        setMessages((prev) => [...prev, { role: "ai", text: error.message || "Maaf, terjadi gangguan saat menghubungkan ke server saat ini." }]);
       }
     } finally {
       setIsLoading(false);
@@ -209,7 +209,7 @@ ${rawText.replace(/\n\s*\n/g, "\n").substring(0, 3e3)}`;
     transition={{ duration: 0.2, ease: "easeOut" }}
     onClick={() => setIsOpen(true)}
     style={gradientStyle}
-    aria-label="Toggle AI Assistant"
+    aria-label="Buka Asisten AI"
     className="fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-white border-2 border-white/20"
   ><Bot size={24} />{hasUnread && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-[#0a0a0a] rounded-full animate-pulse" />}</motion.button> : <motion.div
     key="chat-window"
@@ -230,14 +230,14 @@ ${rawText.replace(/\n\s*\n/g, "\n").substring(0, 3e3)}`;
       e.stopPropagation();
       clearSession();
     }}
-    title="New Chat"
+    title="Percakapan Baru"
     className="p-1 hover:bg-white/20 rounded transition-colors"
   ><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg></button><button
     onClick={(e) => {
       e.stopPropagation();
       setIsOpen(false);
     }}
-    title="Close"
+    title="Tutup"
     className="p-1 hover:bg-white/20 rounded transition-colors"
   ><X size={14} /></button></div></div>{
     /* Chat Area */
@@ -246,12 +246,12 @@ ${rawText.replace(/\n\s*\n/g, "\n").substring(0, 3e3)}`;
   ><ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown></div></div></div>)}{isLoading && <div className="flex justify-start"><div className="bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/5 text-slate-800 dark:text-slate-200 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm"><Loader2 size={14} className="animate-spin text-teal-500" /></div></div>}</div>{
     /* Input Area */
   }<div className="p-3 bg-white dark:bg-[#0a0a0a] border-t border-slate-200 dark:border-white/5 shrink-0">{isLimitReached ? <div className="text-center p-2 animate-in fade-in slide-in-from-bottom-2 duration-500"><p className="text-sm text-slate-600 dark:text-slate-400 mb-3 font-medium">
-                                        You've reached the free tier limit.
+                                        Anda telah mencapai batas penggunaan gratis.
                                     </p><a
     href="/register"
     className="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-teal-500 to-blue-600 text-white font-semibold rounded-xl shadow-md hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.02] transition-all duration-300"
   >
-                                        Register to Continue
+                                        Daftar untuk Melanjutkan
                                     </a></div> : <div className="relative flex items-center"><textarea
     rows={1}
     value={input}
@@ -261,7 +261,7 @@ ${rawText.replace(/\n\s*\n/g, "\n").substring(0, 3e3)}`;
       e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
     }}
     onKeyDown={handleKeyDown}
-    placeholder={isLoading ? "AI is typing..." : "Describe your symptoms..."}
+    placeholder={isLoading ? "AI sedang mengetik..." : "Ceritakan keluhan atau gejala Anda..."}
     disabled={isLoading}
     className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl pl-4 pr-10 py-2.5 text-[14px] outline-none focus:ring-1 focus:ring-teal-500 text-slate-900 dark:text-white placeholder:text-slate-500 disabled:opacity-50 resize-none overflow-hidden block"
     style={{ minHeight: "42px" }}
