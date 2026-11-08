@@ -83,17 +83,32 @@ const TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "
 const storage = flag("--foto") ? await import("../src/services/storage/doctorPhotoStorage.js") : null;
 
 const results = [];
-for (const [i, d] of doctors.entries()) {
+/** Ulangi panggilan bila koneksi ke Supabase putus sesaat (fetch failed / timeout). */
+async function retry(fn, label) {
+  for (let n = 1; ; n++) {
+    try {
+      const r = await fn();
+      if (r?.error && /fetch failed|network|timeout|ECONN|socket/i.test(r.error.message || "") && n < 3) throw r.error;
+      return r;
+    } catch (e) {
+      if (n >= 3) throw new Error(`${label}: ${e.message}`);
+      console.log(`  … ${label} gagal (${e.message}), mencoba lagi (${n}/3)`);
+      await new Promise((ok) => setTimeout(ok, 1500 * n));
+    }
+  }
+}
+
+async function seedOne(i, d, results) {
   let status;
   let userId;
-  const { data: created, error } = await admin.auth.admin.createUser({
+  const { data: created, error } = await retry(() => admin.auth.admin.createUser({
     email: d.email, password: d.password, email_confirm: true,
     user_metadata: { full_name: d.full_name, phone: d.phone || null },
-  });
+  }), "membuat akun");
   if (error) {
-    if (!/already|registered|exists/i.test(error.message)) { results.push([d.full_name, "✖ " + error.message]); continue; }
+    if (!/already|registered|exists/i.test(error.message)) { results.push([d.full_name, "✖ " + error.message]); return; }
     const { data: found } = await admin.from("profiles").select("id").eq("email", d.email).maybeSingle();
-    if (!found) { results.push([d.full_name, "✖ email terdaftar tapi profil tidak ditemukan (jalankan migrasi SQL 02)"]); continue; }
+    if (!found) { results.push([d.full_name, "✖ email terdaftar tapi profil tidak ditemukan (jalankan migrasi SQL 02)"]); return; }
     userId = found.id; status = "diperbarui";
   } else {
     userId = created.user.id; status = "dibuat";
@@ -101,13 +116,13 @@ for (const [i, d] of doctors.entries()) {
 
   const { error: pErr } = await admin.from("profiles")
     .update({ role: "doctor", full_name: d.full_name, phone: d.phone || null, is_active: true }).eq("id", userId);
-  if (pErr) { results.push([d.full_name, "✖ profil: " + pErr.message]); continue; }
+  if (pErr) { results.push([d.full_name, "✖ profil: " + pErr.message]); return; }
 
   const { error: dErr } = await admin.from("doctor_details").upsert({
     user_id: userId, specialty: d.specialty, bio: d.bio || "",
     experience_years: Number(d.experience_years), consultation_fee: Number(d.consultation_fee), is_available: true,
   });
-  if (dErr) { results.push([d.full_name, "✖ detail praktik: " + dErr.message]); continue; }
+  if (dErr) { results.push([d.full_name, "✖ detail praktik: " + dErr.message]); return; }
 
   let jadwal = "";
   if (flag("--jadwal")) {
@@ -146,6 +161,16 @@ for (const [i, d] of doctors.entries()) {
     }
   }
   results.push([d.full_name, `✔ ${status}${jadwal}${foto}`]);
+}
+
+for (const [i, d] of doctors.entries()) {
+  console.log(`→ ${i + 1}/${doctors.length} ${d.full_name}`);
+  try {
+    await seedOne(i, d, results);
+  } catch (e) {
+    // Satu dokter gagal tidak boleh menghentikan dokter berikutnya
+    results.push([d.full_name, `✖ ${e.message}`]);
+  }
 }
 
 console.log("");
