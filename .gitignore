@@ -68,3 +68,6 @@ desktop.ini
 # =====================================
 *.tmp
 *.temp
+
+# Data seeder berisi kata sandi akun uji — jangan di-commit
+backend/scripts/data/*.json
