@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-11-08
+
+### Added
+- Foto profil dokter: kolom `doctor_details.photo_path`, bucket Supabase Storage `doctor-photos` (publik, maks 2 MB, JPEG/PNG/WebP) dengan RLS Storage Policy (hanya admin menulis).
+- Endpoint admin `PUT/DELETE /api/v1/doctors/:id/photo` dengan validasi tipe (magic bytes) & ukuran; penggantian foto aman (foto lama dihapus setelah foto baru tersimpan).
+- Lapisan abstraksi storage (`uploadDoctorPhoto`, `getDoctorPhotoUrl`, `deleteDoctorPhoto`) agar mudah dipindah ke Amazon S3.
+- Komponen foto pada formulir Tambah/Ubah Dokter (pratinjau, ganti, hapus, validasi, status unggah).
+- Direktori dokter pasien (`/patient/doctors`) dengan kartu berfoto, pencarian nama, filter spesialisasi & ketersediaan jadwal, dan "Tampilkan Lebih Banyak".
+- Halaman profil dokter `/patient/doctors/:id` (foto besar, profil, jadwal & sisa slot, tombol Buat Janji Temu yang memilih dokter otomatis).
+- Bagian "Dokter Pilihan Kami" di beranda pasien (data dari API).
+- 10 potret ilustrasi orisinal untuk dokter fiktif (`backend/scripts/data/foto-dokter/`) dan opsi `--foto` pada `seed-doctors.js`.
+
+### Security
+- Trigger database menolak perubahan `photo_path` oleh selain admin; path wajib berada di folder milik dokter tersebut.
+
 ## [2.0.0] - 2026-11-08
 
 ### Changed

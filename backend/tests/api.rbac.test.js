@@ -202,3 +202,128 @@ describe("Administrasi dokter", () => {
     assert.equal(r.status, 409);
   });
 });
+
+const { setStorageProvider, getDoctorPhotoUrl, detectImageType } = await import("../src/services/storage/doctorPhotoStorage.js");
+
+describe("Foto profil dokter", () => {
+  const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(200, 1)]);
+  const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(200, 2)]);
+  const WEBP = Buffer.concat([Buffer.from("RIFF"), Buffer.alloc(4), Buffer.from("WEBP"), Buffer.alloc(200, 3)]);
+  let store, failPut;
+
+  beforeEach(() => {
+    store = { files: new Map(), removed: [] };
+    failPut = false;
+    setStorageProvider({
+      async put(path, buf, type) { if (failPut) throw new Error("gagal"); store.files.set(path, { buf, type }); },
+      async remove(path) { store.removed.push(path); store.files.delete(path); },
+    });
+    db.doctor_details = [{ user_id: U.doctor.id, specialty: "Umum", is_available: true, photo_path: null }];
+    // embed PostgREST profiles → doctor_details (objek yang sama, sehingga update ikut terlihat)
+    db.profiles.find((p) => p.id === U.doctor.id).doctor_details = db.doctor_details[0];
+  });
+
+  const put = (as, buf, type = "image/jpeg", id = U.doctor.id) => {
+    const headers = { "Content-Type": type };
+    if (as) headers.Authorization = `Bearer tok-${U[as].email}`;
+    return fetch(`${base}/doctors/${id}/photo`, { method: "PUT", headers, body: buf })
+      .then(async (r) => ({ status: r.status, body: await r.json() }));
+  };
+
+  it("tanpa login → 401; pasien & dokter → 403 (tidak bisa mengunggah foto dokter)", async () => {
+    assert.equal((await put(null, JPEG)).status, 401);
+    assert.equal((await put("patient", JPEG)).status, 403);
+    assert.equal((await put("doctor", JPEG)).status, 403);
+    assert.equal((await req(`/doctors/${U.doctor.id}/photo`, { as: "patient", method: "DELETE" })).status, 403);
+    assert.equal(store.files.size, 0);
+  });
+
+  it("admin mengunggah JPEG → tersimpan di storage, path di database, photo_url di respons", async () => {
+    const r = await put("admin", JPEG);
+    assert.equal(r.status, 200, r.body.message);
+    const path = db.doctor_details[0].photo_path;
+    assert.match(path, new RegExp(`^${U.doctor.id}/\\d+-[0-9a-f-]{36}\\.jpg$`));
+    assert.ok(store.files.has(path));
+    assert.equal(store.files.get(path).type, "image/jpeg");
+    assert.equal(r.body.data.photo_url, getDoctorPhotoUrl(path));
+    assert.match(r.body.data.photo_url, /\/storage\/v1\/object\/public\/doctor-photos\//);
+  });
+
+  it("PNG dan WebP diterima; nama file selalu unik", async () => {
+    const a = await put("admin", PNG, "image/png");
+    const b = await put("admin", WEBP, "image/webp");
+    assert.equal(a.status, 200);
+    assert.equal(b.status, 200);
+    assert.notEqual(a.body.data.photo_url, b.body.data.photo_url);
+    assert.match(b.body.data.photo_url, /\.webp$/);
+  });
+
+  it("mengganti foto: file baru diunggah dulu, file lama dihapus setelah berhasil", async () => {
+    await put("admin", JPEG);
+    const oldPath = db.doctor_details[0].photo_path;
+    await put("admin", PNG, "image/png");
+    const newPath = db.doctor_details[0].photo_path;
+    assert.notEqual(newPath, oldPath);
+    assert.deepEqual(store.removed, [oldPath]);
+    assert.ok(store.files.has(newPath));
+  });
+
+  it("upload baru gagal → foto lama tetap utuh", async () => {
+    await put("admin", JPEG);
+    const oldPath = db.doctor_details[0].photo_path;
+    failPut = true;
+    const r = await put("admin", PNG, "image/png");
+    assert.equal(r.status, 500);
+    assert.equal(db.doctor_details[0].photo_path, oldPath);
+    assert.ok(store.files.has(oldPath));
+    assert.deepEqual(store.removed, []);
+  });
+
+  it("format salah, isi palsu, dan file > 2 MB ditolak dengan pesan Bahasa Indonesia", async () => {
+    const gif = await put("admin", Buffer.from("GIF89a" + "x".repeat(100)), "image/gif");
+    assert.equal(gif.status, 415);
+    assert.match(gif.body.message, /JPG, JPEG, PNG, atau WebP/);
+    const fake = await put("admin", Buffer.from("<svg>" + "x".repeat(100)), "image/png");
+    assert.equal(fake.status, 415);
+    const mismatch = await put("admin", PNG, "image/jpeg");
+    assert.equal(mismatch.status, 415);
+    const big = await put("admin", Buffer.concat([JPEG, Buffer.alloc(2 * 1024 * 1024)]));
+    assert.equal(big.status, 413);
+    assert.match(big.body.message, /maksimal 2 MB/);
+    const empty = await put("admin", Buffer.alloc(0));
+    assert.equal(empty.status, 400);
+    assert.equal(store.files.size, 0);
+  });
+
+  it("admin menghapus foto → referensi dikosongkan lalu file dihapus", async () => {
+    await put("admin", JPEG);
+    const p = db.doctor_details[0].photo_path;
+    const r = await req(`/doctors/${U.doctor.id}/photo`, { as: "admin", method: "DELETE" });
+    assert.equal(r.status, 200);
+    assert.equal(db.doctor_details[0].photo_path, null);
+    assert.equal(r.body.data.photo_url, null);
+    assert.deepEqual(store.removed, [p]);
+  });
+
+  it("dokter tanpa foto → photo_url null (frontend menampilkan avatar default)", async () => {
+    const r = await req(`/doctors/${U.doctor.id}`, { as: "admin" });
+    assert.equal(r.status, 200);
+    assert.equal(r.body.data.photo_url, null);
+  });
+
+  it("dokter tidak bisa menyisipkan photo_path lewat endpoint ubah profil", async () => {
+    const r = await req(`/doctors/${U.doctor.id}`, { as: "doctor", method: "PUT", body: { bio: "Halo", photo_path: `${U.doctor.id}/x.jpg` } });
+    assert.equal(r.status, 200);
+    assert.equal(db.doctor_details[0].photo_path, null);
+  });
+
+  it("deteksi magic bytes & URL publik dapat diarahkan ke CDN (siap S3/CloudFront)", () => {
+    assert.equal(detectImageType(JPEG), "image/jpeg");
+    assert.equal(detectImageType(WEBP), "image/webp");
+    assert.equal(detectImageType(Buffer.from("hello world!!")), null);
+    process.env.PUBLIC_PHOTO_BASE_URL = "https://cdn.contoh.id/doctor-photos/";
+    assert.equal(getDoctorPhotoUrl("abc/1-x.jpg"), "https://cdn.contoh.id/doctor-photos/abc/1-x.jpg");
+    delete process.env.PUBLIC_PHOTO_BASE_URL;
+    assert.equal(getDoctorPhotoUrl(null), null);
+  });
+});

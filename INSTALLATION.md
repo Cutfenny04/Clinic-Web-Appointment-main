@@ -11,14 +11,17 @@
 3. **SQL Editor**: jalankan berurutan
    - `backend/sql/01_schema_and_rls.sql`
    - `backend/sql/02_security_status_queue.sql`
+   - `backend/sql/03_doctor_photos.sql` — kolom foto dokter + bucket Storage `doctor-photos` (publik, maks 2 MB, JPEG/PNG/WebP) dan policy-nya
 
-   Keduanya aman dijalankan ulang dan tidak menghapus data.
+   Ketiganya aman dijalankan ulang dan tidak menghapus data. Jika SQL Editor menampilkan NOTICE
+   "Tidak dapat membuat policy storage.objects", bucket tetap aman (pengguna biasa tidak bisa menulis);
+   unggahan dilakukan backend dengan service role setelah memeriksa role admin.
 
 ## 2. Isi file environment
 
 | File | Salin dari | Isi penting |
 |---|---|---|
-| `backend/.env` | `backend/.env.example` | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (*Secret key* `sb_secret_…`), `QUEUE_SERVICE_URL`, `QUEUE_INTERNAL_TOKEN` |
+| `backend/.env` | `backend/.env.example` | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (*Secret key* `sb_secret_…`, juga dipakai untuk unggah foto dokter), `QUEUE_SERVICE_URL`, `QUEUE_INTERNAL_TOKEN` |
 | `services/queue-service/.env` | `services/queue-service/.env.example` | `DATABASE_URL` (Supabase → **Connect** → URI), `DATABASE_SSL=true`, `QUEUE_INTERNAL_TOKEN` (sama persis dengan backend) |
 | `janjicare-frontend/.env.local` | `janjicare-frontend/.env.example` | `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` |
 

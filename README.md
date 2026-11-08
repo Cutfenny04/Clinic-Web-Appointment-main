@@ -64,7 +64,7 @@ Backend API (Node.js + Express)  ──── X-Internal-Token ────▶  
 Langkah lengkap ada di **[INSTALLATION.md](./INSTALLATION.md)**. Ringkasnya:
 
 ```bash
-# 1. Jalankan backend/sql/01_schema_and_rls.sql lalu 02_security_status_queue.sql di Supabase SQL Editor
+# 1. Jalankan backend/sql/01_schema_and_rls.sql, 02_security_status_queue.sql, lalu 03_doctor_photos.sql di Supabase SQL Editor
 # 2. Salin .env.example → .env di backend/ dan services/queue-service/, .env.example → .env.local di janjicare-frontend/
 # 3. Instal dependensi
 cd backend && npm install && cd ../services/queue-service && npm install && cd ../../janjicare-frontend && npm install

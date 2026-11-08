@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import { authenticate } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
 import { optionalAuth } from "../../middleware/optionalAuth.js";
@@ -10,7 +10,11 @@ import {
   createDoctor,
   updateDoctor,
   deleteDoctor,
+  uploadPhoto,
+  deletePhoto,
 } from "./doctors.controller.js";
+import { MAX_PHOTO_BYTES } from "../../services/storage/doctorPhotoStorage.js";
+import { ApiError } from "../../utils/ApiError.js";
 import { getDoctorSchedules } from "../schedules/schedules.controller.js";
 
 const router = Router();
@@ -67,5 +71,25 @@ router.delete(
   authorize("admin"),
   deleteDoctor
 );
+
+/**
+ * PUT /api/v1/doctors/:id/photo
+ * Admin only — unggah/ganti foto. Body = isi file mentah, Content-Type = image/jpeg|png|webp (maks 2 MB)
+ */
+const rawPhoto = express.raw({ type: () => true, limit: MAX_PHOTO_BYTES });
+function photoBody(req, res, next) {
+  rawPhoto(req, res, (err) => {
+    if (err?.type === "entity.too.large") return next(new ApiError(413, "Ukuran foto maksimal 2 MB."));
+    if (err) return next(ApiError.badRequest("File foto tidak dapat dibaca."));
+    next();
+  });
+}
+router.put("/:id/photo", authenticate, authorize("admin"), photoBody, uploadPhoto);
+
+/**
+ * DELETE /api/v1/doctors/:id/photo
+ * Admin only — hapus foto dokter
+ */
+router.delete("/:id/photo", authenticate, authorize("admin"), deletePhoto);
 
 export default router;

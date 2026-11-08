@@ -62,10 +62,12 @@ describe("Database: RLS, booking atomik, status, antrean", { skip: !DB_URL && "T
   before(async () => {
     pg = (await import("pg")).default;
     pool = new pg.Pool({ connectionString: DB_URL, max: 12 });
-    await pool.query("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS auth CASCADE;");
+    await pool.query("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS auth CASCADE; DROP SCHEMA IF EXISTS storage CASCADE;");
     await pool.query(sql("supabase_stub.sql"));
     await pool.query(sql("../../sql/01_schema_and_rls.sql"));
     await pool.query(sql("../../sql/02_security_status_queue.sql"));
+    await pool.query(sql("../../sql/03_doctor_photos.sql"));
+    await pool.query(sql("../../sql/03_doctor_photos.sql")); // idempotent
     ids.admin = await newUser("admin@test.id", "Admin", "admin");
     ids.doctor = await newUser("dokter@test.id", "dr. Uji", "doctor");
     ids.doctor2 = await newUser("dokter2@test.id", "dr. Lain", "doctor");
@@ -203,5 +205,58 @@ describe("Database: RLS, booking atomik, status, antrean", { skip: !DB_URL && "T
     assert.equal(st.active_doctors, 2);
     assert.ok(st.registered_patients >= 3);
     await assert.rejects(as(ids.p1, (c) => c.query("SELECT public.admin_dashboard_stats()")), /Akses ditolak/);
+  });
+  it("bucket doctor-photos publik, maks 2 MB, hanya JPEG/PNG/WebP", async () => {
+    const { rows } = await pool.query("SELECT public, file_size_limit, allowed_mime_types FROM storage.buckets WHERE id='doctor-photos'");
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].public, true);
+    assert.equal(Number(rows[0].file_size_limit), 2 * 1024 * 1024);
+    assert.deepEqual(rows[0].allowed_mime_types, ["image/jpeg", "image/png", "image/webp"]);
+  });
+
+  it("hanya admin yang boleh mengatur photo_path; dokter & pasien ditolak", async () => {
+    const p = `${ids.doctor}/1731050000000-a1b2.jpg`;
+    await assert.rejects(
+      as(ids.doctor, (c) => c.query("UPDATE public.doctor_details SET photo_path=$2 WHERE user_id=$1", [ids.doctor, p])),
+      /Hanya admin/
+    );
+    const n = await as(ids.p1, (c) => c.query("UPDATE public.doctor_details SET photo_path=$2 WHERE user_id=$1", [ids.doctor, p]).then((r) => r.rowCount));
+    assert.equal(n, 0); // RLS: pasien tidak melihat baris untuk diubah
+    await as(ids.admin, (c) => c.query("UPDATE public.doctor_details SET photo_path=$2 WHERE user_id=$1", [ids.doctor, p]));
+    const { rows } = await pool.query("SELECT photo_path, photo_updated_at FROM public.doctor_details WHERE user_id=$1", [ids.doctor]);
+    assert.equal(rows[0].photo_path, p);
+    assert.ok(rows[0].photo_updated_at);
+    // dokter masih boleh mengubah bio sendiri
+    await as(ids.doctor, (c) => c.query("UPDATE public.doctor_details SET bio='Bio baru' WHERE user_id=$1", [ids.doctor]));
+  });
+
+  it("photo_path harus berada di folder dokter itu sendiri dan berekstensi gambar", async () => {
+    await assert.rejects(
+      pool.query("UPDATE public.doctor_details SET photo_path=$2 WHERE user_id=$1", [ids.doctor, `${ids.doctor2}/x.jpg`]),
+      /photo_path_check/
+    );
+    await assert.rejects(
+      pool.query("UPDATE public.doctor_details SET photo_path=$2 WHERE user_id=$1", [ids.doctor, `${ids.doctor}/x.svg`]),
+      /photo_path_check/
+    );
+  });
+
+  it("Storage policy: publik bisa membaca, hanya admin bisa menulis ke doctor-photos", async () => {
+    const ins = (uid) => as(uid, (c) => c.query(
+      "INSERT INTO storage.objects (bucket_id, name) VALUES ('doctor-photos', $1)", [`${ids.doctor}/${uid.slice(0, 8)}.jpg`]));
+    await assert.rejects(ins(ids.p1), /row-level security/);
+    await assert.rejects(ins(ids.doctor), /row-level security/);
+    await ins(ids.admin);
+    const c = await pool.connect();
+    try {
+      await c.query("BEGIN; SET LOCAL ROLE anon");
+      const r = await c.query("SELECT count(*)::int n FROM storage.objects WHERE bucket_id='doctor-photos'");
+      assert.equal(r.rows[0].n, 1);
+      const d = await c.query("DELETE FROM storage.objects WHERE bucket_id='doctor-photos'");
+      assert.equal(d.rowCount, 0);
+      await c.query("ROLLBACK");
+    } finally { c.release(); }
+    const del = await as(ids.p1, (cl) => cl.query("DELETE FROM storage.objects WHERE bucket_id='doctor-photos'").then((r) => r.rowCount));
+    assert.equal(del, 0);
   });
 });

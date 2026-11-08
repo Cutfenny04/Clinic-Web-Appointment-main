@@ -5,6 +5,7 @@ import { useApi } from "@/hooks/useApi";
 import { apiService } from "@/services/api";
 import { PageHeader, Card, AsyncBlock, Button, Field, Select, Textarea, ConfirmDialog, cx, EmptyState } from "@/components/ui";
 import MiniCalendar from "@/components/shared/MiniCalendar";
+import DoctorPhoto from "@/components/shared/DoctorPhoto";
 import { formatCurrency, formatDateLong, formatTimeRange, todayJakarta, addDays } from "@/utils/format";
 
 const STEPS = ["Pilih Dokter", "Pilih Tanggal & Sesi", "Isi Keluhan", "Selesai"];
@@ -104,10 +105,14 @@ export default function PatientBook() {
                 </Select>
               </Field>
               {doctor && (
-                <div className="mt-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 p-4 text-sm">
-                  <p className="font-bold text-gray-900 dark:text-white">{doctor.name}</p>
-                  <p className="text-teal-700 dark:text-teal-300 font-semibold">{doctor.specialty}</p>
-                  <p className="text-gray-600 dark:text-gray-300 mt-1">Biaya konsultasi {formatCurrency(doctor.consultation_fee)}</p>
+                <div className="mt-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 p-4 text-sm flex gap-3 items-center" data-testid="dokter-terpilih">
+                  <DoctorPhoto doctor={doctor} size="avatar" className="w-14 h-14" />
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 dark:text-white">{doctor.name}</p>
+                    <p className="text-teal-700 dark:text-teal-300 font-semibold">{doctor.specialty}</p>
+                    <p className="text-gray-600 dark:text-gray-300 mt-1">Biaya konsultasi {formatCurrency(doctor.consultation_fee)}</p>
+                    <Link to={`/patient/doctors/${doctor.id}`} className="text-xs font-semibold text-mauve-600 hover:underline">Lihat profil dokter</Link>
+                  </div>
                 </div>
               )}
             </AsyncBlock>

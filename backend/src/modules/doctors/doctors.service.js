@@ -1,8 +1,11 @@
 import { supabaseAuthClient, supabaseAdmin } from "../../config/supabase.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { toApiError } from "../../utils/dbError.js";
+import { todayJakarta, nowTimeJakarta, addDaysYmd } from "../../utils/time.js";
+import { uploadDoctorPhoto, getDoctorPhotoUrl, deleteDoctorPhoto } from "../../services/storage/doctorPhotoStorage.js";
 
-const DETAIL_COLS = "specialty, bio, experience_years, consultation_fee, is_available";
+const DETAIL_COLS = "specialty, bio, experience_years, consultation_fee, is_available, photo_path";
+const AVAILABILITY_DAYS = 30;
 
 function mapDoctor(p, includePrivate = false) {
   const d = Array.isArray(p.doctor_details) ? p.doctor_details[0] : p.doctor_details;
@@ -18,6 +21,7 @@ function mapDoctor(p, includePrivate = false) {
     is_available: d?.is_available !== false,
     is_active: p.is_active !== false,
     avatar_url: p.avatar_url || null,
+    photo_url: getDoctorPhotoUrl(d?.photo_path),
     ...(includePrivate && { email: p.email || null, phone: p.phone || null, created_at: p.created_at }),
   };
 }
@@ -42,7 +46,45 @@ export async function getDoctorsList(client = supabaseAuthClient, query = {}, vi
     const s = String(query.specialty).toLowerCase();
     rows = rows.filter((d) => d.specialty.toLowerCase().includes(s));
   }
-  return rows;
+  return attachAvailability(rows, client);
+}
+
+/**
+ * Menambahkan info ketersediaan jadwal (dihitung server, bukan dipercaya dari frontend):
+ *  next_available_date  — tanggal terdekat (≤ 30 hari) yang masih punya sesi dengan sisa kuota
+ *  available_sessions   — jumlah sesi yang masih bisa dipesan dalam rentang itu
+ * Booking tetap divalidasi ulang secara atomik oleh book_appointment_atomic.
+ */
+async function attachAvailability(rows, client) {
+  if (!rows.length) return rows;
+  const today = todayJakarta();
+  const now = nowTimeJakarta();
+  const { data: scheds, error } = await client.from("doctor_schedules")
+    .select("id, doctor_id, schedule_date, end_time, capacity")
+    .in("doctor_id", rows.map((d) => d.id))
+    .eq("is_active", true)
+    .gte("schedule_date", today)
+    .lte("schedule_date", addDaysYmd(today, AVAILABILITY_DAYS));
+  if (error || !scheds?.length) {
+    return rows.map((d) => ({ ...d, next_available_date: null, available_sessions: 0 }));
+  }
+  const open = scheds.filter((s) => !(s.schedule_date === today && String(s.end_time).slice(0, 5) <= now));
+  const { data: counts } = open.length
+    ? await client.rpc("schedule_booked_counts", { p_schedule_ids: open.map((s) => s.id) })
+    : { data: [] };
+  const booked = Object.fromEntries((counts || []).map((c) => [c.schedule_id, c.booked]));
+  const byDoctor = {};
+  for (const s of open) {
+    if ((booked[s.id] || 0) >= s.capacity) continue;
+    const cur = (byDoctor[s.doctor_id] ||= { next: null, n: 0 });
+    cur.n += 1;
+    if (!cur.next || s.schedule_date < cur.next) cur.next = s.schedule_date;
+  }
+  return rows.map((d) => ({
+    ...d,
+    next_available_date: byDoctor[d.id]?.next || null,
+    available_sessions: byDoctor[d.id]?.n || 0,
+  }));
 }
 
 export async function getDoctorById(doctorId, client = supabaseAuthClient, viewer = null) {
@@ -54,7 +96,13 @@ export async function getDoctorById(doctorId, client = supabaseAuthClient, viewe
     .maybeSingle();
   if (error) throw toApiError(error, "Gagal memuat data dokter.");
   if (!data) throw ApiError.notFound("Dokter tidak ditemukan.");
-  return mapDoctor(data, viewer?.role === "admin" || viewer?.id === doctorId);
+  const privileged = viewer?.role === "admin" || viewer?.id === doctorId;
+  // Dokter nonaktif tidak ditampilkan ke publik/pasien
+  if (!privileged && data.is_active === false) throw ApiError.notFound("Dokter tidak ditemukan.");
+  const doctor = mapDoctor(data, privileged);
+  if (privileged) return doctor;
+  const [withAvail] = await attachAvailability([doctor], client);
+  return withAvail;
 }
 
 function requireAdminClient() {
@@ -153,4 +201,49 @@ export async function deleteDoctor(doctorId, client) {
   if (error) throw toApiError(error, "Gagal menonaktifkan dokter.");
   await client.from("doctor_details").update({ is_available: false }).eq("user_id", doctorId);
   return { message: "Dokter berhasil dinonaktifkan. Riwayat konsultasi tetap tersimpan." };
+}
+
+async function currentPhotoPath(doctorId, client) {
+  const { data, error } = await client.from("doctor_details").select("user_id, photo_path").eq("user_id", doctorId).maybeSingle();
+  if (error) throw toApiError(error, "Gagal memuat data dokter.");
+  if (!data) throw ApiError.notFound("Dokter tidak ditemukan.");
+  return data.photo_path || null;
+}
+
+/**
+ * Admin mengganti foto dokter dengan urutan yang aman:
+ *  1) unggah file baru (nama unik — file lama tidak tersentuh)
+ *  2) simpan path baru ke database
+ *     - bila gagal: hapus file baru, foto lama tetap dipakai
+ *  3) hapus file lama (best effort; kegagalan hanya dicatat di log)
+ */
+export async function setDoctorPhoto(doctorId, { buffer, contentType }, client) {
+  const oldPath = await currentPhotoPath(doctorId, client);
+  const uploaded = await uploadDoctorPhoto({ doctorId, buffer, contentType });
+
+  const { data: updatedRows, error } = await client.from("doctor_details")
+    .update({ photo_path: uploaded.path }).eq("user_id", doctorId).select("user_id");
+  if (error || !updatedRows?.length) {
+    await deleteDoctorPhoto(uploaded.path).catch((e) => console.error("[foto] rollback gagal:", e.message));
+    if (error) throw toApiError(error, "Gagal menyimpan foto dokter.");
+    throw ApiError.forbidden("Anda tidak memiliki akses untuk mengubah foto dokter ini.");
+  }
+
+  if (oldPath && oldPath !== uploaded.path) {
+    await deleteDoctorPhoto(oldPath).catch((e) => console.error("[foto] gagal menghapus file lama:", oldPath, e.message));
+  }
+  return getDoctorById(doctorId, client, { role: "admin" });
+}
+
+/** Admin menghapus foto: kosongkan referensi dulu, baru hapus file. */
+export async function removeDoctorPhoto(doctorId, client) {
+  const oldPath = await currentPhotoPath(doctorId, client);
+  if (oldPath) {
+    const { data: rows, error } = await client.from("doctor_details")
+      .update({ photo_path: null }).eq("user_id", doctorId).select("user_id");
+    if (error) throw toApiError(error, "Gagal menghapus foto dokter.");
+    if (!rows?.length) throw ApiError.forbidden("Anda tidak memiliki akses untuk mengubah foto dokter ini.");
+    await deleteDoctorPhoto(oldPath).catch((e) => console.error("[foto] gagal menghapus file:", oldPath, e.message));
+  }
+  return getDoctorById(doctorId, client, { role: "admin" });
 }

@@ -87,3 +87,52 @@ Pemetaan ke daftar uji Fase 10: (1–3) login 3 role ✔ · (4) redirect sesuai 
 - Dihapus: `clinic-app/`, `run.bat`, `deploy.ps1`, `janjicare-frontend/scripts/migrate.cjs`, `janjicare-frontend/diagnose.mjs`, `janjicare-frontend/lib/supabase.ts` (duplikat).
 - `dev.bat` kini menjalankan ketiga layanan sekaligus; `.github/workflows/test.yml` diganti ke Node.js + PostgreSQL.
 - `README.md`, `INSTALLATION.md`, `CHANGELOG.md`, dan screenshot di `assets/` diperbarui.
+
+## Pembaruan 8 November 2026 — Foto profil & direktori dokter
+
+### Audit awal
+- Sudah ada `profiles.avatar_url` (URL generik untuk semua pengguna, tidak pernah diisi untuk dokter). **Tidak diduplikasi.**
+  Foto dokter memakai kolom baru `doctor_details.photo_path` karena yang disimpan adalah *path* objek Storage, bukan URL penyedia.
+- Belum ada kolom `photo_url`/`photo_path`, bucket Storage, endpoint unggah, maupun halaman detail dokter (sebelumnya modal).
+
+### Migrasi database: `backend/sql/03_doctor_photos.sql`
+- `doctor_details.photo_path` + `photo_updated_at`; CHECK: path wajib `<user_id>/<nama>.(jpg|jpeg|png|webp)`.
+- Trigger `protect_doctor_photo`: hanya admin (atau service role) yang boleh mengubah `photo_path`. Dokter tetap bisa mengubah bio sendiri.
+- Bucket `doctor-photos`: publik, `file_size_limit` 2 MB, `allowed_mime_types` JPEG/PNG/WebP.
+
+### Storage policy (`storage.objects`)
+| Policy | Operasi | Siapa |
+|---|---|---|
+| `doctor_photos_public_read` | SELECT | semua orang (foto profil memang publik) |
+| `doctor_photos_admin_insert` / `_update` / `_delete` | INSERT/UPDATE/DELETE | `authenticated` **dan** `public.is_admin()` |
+
+Backend mengunggah dengan service role **setelah** memeriksa role admin; policy di atas adalah lapisan kedua. Service role key tidak pernah dikirim ke frontend.
+
+### Backend
+- `src/services/storage/doctorPhotoStorage.js`: `uploadDoctorPhoto()`, `getDoctorPhotoUrl()`, `deleteDoctorPhoto()` + validasi ukuran & magic bytes; `supabaseProvider.js` sebagai provider (siap diganti S3, lihat `docs/AWS_DEPLOYMENT.md`).
+- `PUT /api/v1/doctors/:id/photo` dan `DELETE /api/v1/doctors/:id/photo` (admin). Urutan ganti foto: unggah file baru (nama unik) → simpan path → hapus file lama. Bila langkah simpan gagal, file baru dihapus dan foto lama tetap.
+- Respons dokter memuat `photo_url`; untuk pasien juga `next_available_date` & `available_sessions` (dihitung server). Dokter nonaktif → 404 untuk publik.
+- `scripts/seed-doctors.js --foto` mengunggah 10 potret ilustrasi dari `scripts/data/foto-dokter/` (idempoten).
+
+### Frontend
+- `services/doctorPhotos.js` (frontend tidak memanggil Storage langsung), komponen `DoctorPhoto`, `DoctorPhotoInput`, `DoctorCard`.
+- Admin → Data Dokter: foto di tabel; formulir Tambah/Ubah dengan pratinjau, ganti, hapus, validasi format/ukuran, status unggah.
+- `/patient/doctors`: grid 1/2/3–4 kolom, pencarian nama, filter spesialisasi & ketersediaan, "Tampilkan Lebih Banyak", loading/empty/error.
+- `/patient/doctors/:id`: foto besar, profil, biaya, jadwal & sisa slot, tombol Buat Janji Temu → `/patient/book?doctor=<id>` (dokter otomatis terpilih; kapasitas tetap divalidasi `book_appointment_atomic`).
+- Beranda pasien: "Dokter Pilihan Kami" (4 dokter dari API) + "Lihat Semua Dokter".
+
+### Foto
+Potret yang dipakai adalah **ilustrasi orisinal** (`scripts/generate-doctor-portraits.py`) untuk dokter fiktif, berlatar klinik seragam.
+Foto di `janjicare-frontend/public/image/` (andi.jpg, nadia.jpg, dst.) **tidak dipakai**: foto tersebut tampak sebagai foto orang sungguhan, bukan hasil AI atau aset berlisensi.
+
+### Hasil pengujian
+| Uji | Hasil |
+|---|---|
+| Backend `npm test` (dengan `TEST_DATABASE_URL`) | **62/62** (10 tes API foto + 4 tes DB/Storage policy baru) |
+| Queue service `npm test` (dengan DB) | **16/16** |
+| Frontend `vite build` | berhasil |
+| E2E foto (Playwright, 12 skenario brief + 15 cek tambahan) | **27/27**, tanpa error konsol |
+| Regresi: crawler semua halaman 3 role | 0 temuan |
+| Regresi: aksi admin/dokter/pasien | **61/61** |
+
+E2E dijalankan di stack lokal (GoTrue + PostgREST + PostgreSQL 16 + emulator Storage sederhana). **Belum diuji langsung terhadap Supabase Storage asli** — jalankan migrasi 03 di proyek Supabase Anda lalu `node scripts/seed-doctors.js --foto`.

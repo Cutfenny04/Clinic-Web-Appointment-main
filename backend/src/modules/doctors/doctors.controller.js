@@ -36,3 +36,18 @@ export async function deleteDoctor(req, res, next) {
     res.status(200).json({ success: true, message: result.message });
   } catch (err) { next(err); }
 }
+
+export async function uploadPhoto(req, res, next) {
+  try {
+    const doctor = await doctorService.setDoctorPhoto(req.params.id,
+      { buffer: req.body, contentType: req.headers["content-type"] }, req.supabase);
+    res.status(200).json({ success: true, message: "Foto dokter berhasil disimpan.", data: doctor });
+  } catch (err) { next(err); }
+}
+
+export async function deletePhoto(req, res, next) {
+  try {
+    const doctor = await doctorService.removeDoctorPhoto(req.params.id, req.supabase);
+    res.status(200).json({ success: true, message: "Foto dokter dihapus.", data: doctor });
+  } catch (err) { next(err); }
+}

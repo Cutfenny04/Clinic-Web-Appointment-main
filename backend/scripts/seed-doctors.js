@@ -5,6 +5,9 @@
  *
  *   node scripts/seed-doctors.js               # buat / perbarui 10 dokter
  *   node scripts/seed-doctors.js --jadwal      # + jadwal praktik 14 hari ke depan (untuk uji booking)
+ *   node scripts/seed-doctors.js --foto        # + unggah potret ilustrasi dari scripts/data/foto-dokter/
+ *                                              (nama file = nama depan dokter, mis. andi.jpg)
+ *   node scripts/seed-doctors.js --foto --ganti-foto   # timpa foto yang sudah ada
  *   node scripts/seed-doctors.js --cek         # hanya validasi file, tidak menulis ke database
  *   node scripts/seed-doctors.js --file path/ke/data.json
  *
@@ -22,6 +25,8 @@ const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
 const fileArg = args.includes("--file") ? args[args.indexOf("--file") + 1] : path.join(here, "data", "dokter-dummy.json");
 
+const fotoDir = args.includes("--foto") && args[args.indexOf("--foto") + 1] && !args[args.indexOf("--foto") + 1].startsWith("--")
+  ? path.resolve(args[args.indexOf("--foto") + 1]) : path.join(here, "data", "foto-dokter");
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^(\+62|62|0)[0-9]{8,13}$/;
 
@@ -65,6 +70,17 @@ const todayJakarta = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ja
 const addDays = (ymd, n) => { const d = new Date(ymd + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 // Pola jadwal contoh: tiap dokter praktik 3 hari per minggu, pagi atau sore bergantian
 const SESSIONS = [["08:00", "12:00"], ["13:00", "16:00"], ["16:00", "20:00"]];
+
+/** Nama depan dokter → nama file foto: "dr. Salsabila Rahman, Sp.OG" → "salsabila" */
+const photoKey = (name) => name.replace(/^dr\.?\s*/i, "").split(/[\s,]+/)[0].toLowerCase();
+function findPhoto(name) {
+  if (!fs.existsSync(fotoDir)) return null;
+  const key = photoKey(name);
+  const f = fs.readdirSync(fotoDir).find((x) => /\.(jpe?g|png|webp)$/i.test(x) && x.replace(/\.[^.]+$/, "").toLowerCase() === key);
+  return f ? path.join(fotoDir, f) : null;
+}
+const TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+const storage = flag("--foto") ? await import("../src/services/storage/doctorPhotoStorage.js") : null;
 
 const results = [];
 for (const [i, d] of doctors.entries()) {
@@ -111,7 +127,25 @@ for (const [i, d] of doctors.entries()) {
     }
     jadwal = ` · ${made} jadwal baru`;
   }
-  results.push([d.full_name, `✔ ${status}${jadwal}`]);
+  let foto = "";
+  if (storage) {
+    const file = findPhoto(d.full_name);
+    const { data: det } = await admin.from("doctor_details").select("photo_path").eq("user_id", userId).maybeSingle();
+    if (!file) foto = " · foto tidak ditemukan";
+    else if (det?.photo_path && !flag("--ganti-foto")) foto = " · foto sudah ada";
+    else {
+      try {
+        const up = await storage.uploadDoctorPhoto({
+          doctorId: userId, buffer: fs.readFileSync(file), contentType: TYPES[file.split(".").pop().toLowerCase()],
+        });
+        const { error: fErr } = await admin.from("doctor_details").update({ photo_path: up.path }).eq("user_id", userId);
+        if (fErr) { await storage.deleteDoctorPhoto(up.path).catch(() => {}); throw new Error(fErr.message); }
+        if (det?.photo_path) await storage.deleteDoctorPhoto(det.photo_path).catch(() => {});
+        foto = ` · foto ${path.basename(file)}`;
+      } catch (e) { foto = ` · ✖ foto: ${e.message}`; }
+    }
+  }
+  results.push([d.full_name, `✔ ${status}${jadwal}${foto}`]);
 }
 
 console.log("");

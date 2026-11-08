@@ -44,6 +44,7 @@ const DoctorProfile = lazy(() => import("../pages/doctor/Profile"));
 // Pasien
 const PatientDashboard = lazy(() => import("../pages/patient/Dashboard"));
 const PatientDoctors = lazy(() => import("../pages/patient/Doctors"));
+const PatientDoctorDetail = lazy(() => import("../pages/patient/DoctorDetail"));
 const PatientBook = lazy(() => import("../pages/patient/Book"));
 const PatientAppointments = lazy(() => import("../pages/patient/Appointments"));
 const PatientQueue = lazy(() => import("../pages/patient/Queue"));
@@ -98,6 +99,7 @@ export default function AppRoutes() {
         <Route path="/patient" element={<Navigate to="/patient/dashboard" replace />} />
         <Route path="/patient/dashboard" element={patient(<PatientDashboard />)} />
         <Route path="/patient/doctors" element={patient(<PatientDoctors />)} />
+        <Route path="/patient/doctors/:id" element={patient(<PatientDoctorDetail />)} />
         <Route path="/patient/book" element={patient(<PatientBook />)} />
         <Route path="/patient/appointments" element={patient(<PatientAppointments />)} />
         <Route path="/patient/queue" element={patient(<PatientQueue />)} />

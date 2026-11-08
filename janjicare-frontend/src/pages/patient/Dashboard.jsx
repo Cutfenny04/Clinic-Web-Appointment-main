@@ -5,12 +5,23 @@ import { useApi } from "@/hooks/useApi";
 import { apiService } from "@/services/api";
 import { PageHeader, Card, AsyncBlock, StatusBadge, StatCard } from "@/components/ui";
 import { formatDateLong, formatTimeRange, todayJakarta } from "@/utils/format";
+import DoctorCard from "@/components/shared/DoctorCard";
+
+/** Urutan "Dokter Pilihan Kami": yang berfoto lebih dulu, lalu jadwal terdekat. Semua dari API, tanpa data tetap. */
+function pickFeatured(list = [], n = 4) {
+  return [...list].sort((a, b) =>
+    Number(!!b.photo_url) - Number(!!a.photo_url)
+    || (a.next_available_date || "9999").localeCompare(b.next_available_date || "9999")
+    || a.name.localeCompare(b.name, "id")).slice(0, n);
+}
 
 export default function PatientDashboard() {
   const { user } = useAuth();
   const today = todayJakarta();
   const appts = useApi(() => apiService.appointments.mine(), [], { interval: 30000 });
   const queue = useApi(() => apiService.queue.mine(), [], { interval: 15000 });
+  const doctors = useApi(() => apiService.doctors.list(), []);
+  const featured = pickFeatured(doctors.data || []);
   const all = appts.data || [];
   const upcoming = all.filter((a) => ["pending", "confirmed", "checked_in", "in_progress"].includes(a.status) && a.schedule_date >= today)
     .sort((a, b) => (a.schedule_date + a.start_time).localeCompare(b.schedule_date + b.start_time));
@@ -49,6 +60,24 @@ export default function PatientDashboard() {
           </div>
         </Card>
       </div>
+
+      <section className="mt-10" aria-labelledby="dokter-pilihan">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-mauve-500">Tim Dokter</p>
+            <h2 id="dokter-pilihan" className="font-serif text-2xl font-semibold text-gray-900 dark:text-white">Dokter Pilihan Kami</h2>
+          </div>
+          <Link to="/patient/doctors" className="inline-flex items-center px-4 py-2 rounded-md text-sm font-semibold border border-gray-300 dark:border-slate-700 text-gray-800 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800">
+            Lihat Semua Dokter →
+          </Link>
+        </div>
+        <AsyncBlock loading={doctors.loading} error={doctors.error} onRetry={doctors.reload} empty={!featured.length}
+          emptyTitle="Belum ada dokter yang menerima janji temu" rows={2}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {featured.map((d) => <DoctorCard key={d.id} doctor={d} compact />)}
+          </div>
+        </AsyncBlock>
+      </section>
     </SidebarLayout>
   );
 }

@@ -17,6 +17,12 @@ Prefix URL: `http://localhost:3000/api/v1` · Semua pesan berbahasa Indonesia ·
 | POST | `/doctors` | admin | Buat akun dokter baru (`email,password,full_name,specialty,...`) — butuh `SUPABASE_SERVICE_ROLE_KEY` |
 | PUT | `/doctors/:id` | admin / dokter ybs | Profil & detail praktik; `is_active` hanya admin |
 | DELETE | `/doctors/:id` | admin | Nonaktifkan (soft delete); ditolak bila ada janji temu aktif |
+| PUT | `/doctors/:id/photo` | admin | Unggah/ganti foto. Body = isi file mentah, `Content-Type: image/jpeg\|image/png\|image/webp`, maks 2 MB. 413 bila terlalu besar, 415 bila format/isi tidak valid |
+| DELETE | `/doctors/:id/photo` | admin | Hapus foto (referensi dikosongkan, lalu file dihapus) |
+
+Setiap objek dokter memuat `photo_url` (URL publik atau `null` → frontend menampilkan avatar default).
+Untuk non-admin, `GET /doctors` dan `GET /doctors/:id` juga memuat `next_available_date` (tanggal terdekat dalam 30 hari
+yang masih punya sisa kuota) dan `available_sessions`, dihitung server. Dokter nonaktif → 404 untuk publik/pasien.
 | GET | `/schedules?doctor_id&date&from&to&upcoming&mine` | Publik | Termasuk `booked_count`, `remaining`, `is_full` |
 | POST/PUT/DELETE | `/schedules[/:id]` | admin / dokter (miliknya) | Cek tabrakan jadwal, tanggal lampau, kapasitas ≥ booking aktif |
 | POST | `/appointments` | patient | Booking atomik (RPC `book_appointment_atomic`) |
