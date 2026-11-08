@@ -79,3 +79,11 @@ Pemetaan ke daftar uji Fase 10: (1–3) login 3 role ✔ · (4) redirect sesuai 
 4. Buat admin pertama: `cd backend && node scripts/create-staff-user.js --role admin --email ... --name "..." --password "..."`.
 5. Jalankan ketiga layanan, uji login 3 role di browser.
 6. Jika semua sesuai: commit perubahan, buat tag `legacy-laravel`, lalu hapus `clinic-app/` + skrip lama di commit terpisah (lihat checklist di `docs/AUDIT_FASE1.md` §9).
+
+---
+
+## Pembaruan 8 November 2026 — Penghapusan Laravel
+- Tag `legacy-laravel` dibuat di commit `117b2884` (versi terakhir yang masih memuat `clinic-app/`).
+- Dihapus: `clinic-app/`, `run.bat`, `deploy.ps1`, `janjicare-frontend/scripts/migrate.cjs`, `janjicare-frontend/diagnose.mjs`, `janjicare-frontend/lib/supabase.ts` (duplikat).
+- `dev.bat` kini menjalankan ketiga layanan sekaligus; `.github/workflows/test.yml` diganti ke Node.js + PostgreSQL.
+- `README.md`, `INSTALLATION.md`, `CHANGELOG.md`, dan screenshot di `assets/` diperbarui.

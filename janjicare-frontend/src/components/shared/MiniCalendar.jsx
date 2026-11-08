@@ -66,7 +66,7 @@ export default function MiniCalendar({ value, onChange, available = new Set(), m
           );
         })}
       </div>
-      <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Tanggal bertanda hijau memiliki jadwal praktik yang tersedia.</p>
+      <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Tanggal yang dapat dipilih (bertanda titik) memiliki sesi praktik dengan kuota tersisa.</p>
     </div>
   );
 }

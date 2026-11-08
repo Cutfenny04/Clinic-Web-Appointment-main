@@ -5,7 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0] - 2026-11-08
+
+### Changed
+- Backend Laravel/PHP + Inertia digantikan sepenuhnya oleh Node.js (Express) + REST API, React Router, dan Supabase Auth.
+- Antrean dipindahkan ke Queue Microservice dengan penyimpanan PostgreSQL (persisten & idempoten).
+- Tiga dasbor terpisah (admin, dokter, pasien) dengan menu baru; seluruh antarmuka berbahasa Indonesia.
+- Tampilan baru dengan palet Back in Black / Funkie Friday / Moonscape / Decanting / Mountain Heather dan tipografi serif.
+- CI GitHub Actions kini menjalankan tes Node.js (termasuk tes database PostgreSQL) dan build frontend.
+
+### Removed
+- Folder `clinic-app/` (Laravel) beserta `run.bat`, `deploy.ps1`, dan skrip migrasi frontend lama. Versi terakhirnya tersimpan di tag `legacy-laravel`.
+
+### Security
+- Booking atas nama pasien lain, perubahan status langsung oleh pasien, dan eskalasi role ditutup di level database (RLS & fungsi SECURITY DEFINER).
+
+## [1.x] - Laravel (arsip)
 
 ### Added
 - Initial setup for JanjiCare Web Appointment System.

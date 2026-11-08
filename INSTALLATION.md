@@ -1,155 +1,73 @@
-# JanjiCare Installation Guide
+# Panduan Instalasi JanjiCare
 
-Welcome to the detailed installation guide for the JanjiCare Clinic Web Appointment System. This document will walk you through setting up the project for both **local development** and **production deployment**.
+## Prasyarat
+- **Node.js 20+** (disarankan 22) dan npm
+- Akun **Supabase** (gratis) — dipakai untuk Auth dan PostgreSQL sementara
+- Git
 
----
+## 1. Siapkan database (Supabase)
+1. Buat project di Supabase.
+2. **Authentication → Sign In / Providers → Email**: aktifkan *Enable email provider*. Selama pengujian, matikan *Confirm email*.
+3. **SQL Editor**: jalankan berurutan
+   - `backend/sql/01_schema_and_rls.sql`
+   - `backend/sql/02_security_status_queue.sql`
 
-## Prerequisites
+   Keduanya aman dijalankan ulang dan tidak menghapus data.
 
-Before you begin, ensure your system meets the following requirements:
+## 2. Isi file environment
 
-### Backend
-- **PHP**: `^8.3`, patched to at least 8.3.36 / 8.4.27 / 8.5.12 (CVE-2026-109618 / CVE-2026-109619)
-- **Composer**: `v2.x`
-- **Database**: PostgreSQL (recommended) or MySQL
-- **Redis**: Recommended for production (required if scaling WebSockets), but completely **optional** for local development.
+| File | Salin dari | Isi penting |
+|---|---|---|
+| `backend/.env` | `backend/.env.example` | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (*Secret key* `sb_secret_…`), `QUEUE_SERVICE_URL`, `QUEUE_INTERNAL_TOKEN` |
+| `services/queue-service/.env` | `services/queue-service/.env.example` | `DATABASE_URL` (Supabase → **Connect** → URI), `DATABASE_SSL=true`, `QUEUE_INTERNAL_TOKEN` (sama persis dengan backend) |
+| `janjicare-frontend/.env.local` | `janjicare-frontend/.env.example` | `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` |
 
-### Frontend
-- **Node.js**: `v18.x` or higher (v20+ recommended)
-- **NPM**: `v9.x` or higher
-
-### Infrastructure & Telehealth
-- **Docker & Docker Compose**: Required for running the LiveKit Server locally.
-
----
-
-## Local Development Setup
-
-Follow these steps to get a full development environment running on your local machine.
-
-### 1. Clone the Repository
-Clone the project and navigate into the application directory:
+Buat token internal acak:
 ```bash
-git clone https://github.com/zis3c/Clinic-Web-Appointment-System.git
-cd "Clinic Web Appointment System/clinic-app"
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### 2. Install Dependencies
-Install the required PHP and Node.js packages:
+Catatan:
+- Karakter khusus pada password database di `DATABASE_URL` harus di-encode (`@` → `%40`).
+- **Jangan** menaruh secret/service role key di frontend. File `.env*` sudah diabaikan Git.
+
+## 3. Instal dependensi
 ```bash
-# Backend dependencies
-composer install
-
-# Frontend dependencies
-npm install
+cd backend && npm install
+cd ../services/queue-service && npm install
+cd ../../janjicare-frontend && npm install
 ```
 
-### 3. Environment Configuration
-Create your environment file by copying the example:
+## 4. Buat akun staf
+Registrasi publik selalu membuat akun **pasien**. Admin pertama dibuat lewat skrip:
 ```bash
-cp .env.example .env
+cd backend
+node scripts/create-staff-user.js --role admin --email admin@klinik.id --name "Admin Klinik" --password "KataSandiKuat123"
 ```
-Generate your application encryption key:
+Akun dokter dibuat admin dari menu **Data Dokter**, atau:
 ```bash
-php artisan key:generate
+node scripts/create-staff-user.js --role doctor --email dokter@klinik.id --name "dr. Nama" --password "KataSandiKuat123" --specialty "Dokter Umum"
 ```
 
-Open `.env` and configure your database and Redis connections:
-```ini
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=janjicare
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
+## 5. Jalankan
+**Windows:** klik dua kali `dev.bat` — tiga jendela terbuka (queue, backend, frontend) dan browser membuka `http://localhost:5173`.
 
-REDIS_HOST=127.0.0.1
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-```
-
-### 4. Database Setup & Seeding
-Run the database migrations to build the schema, and run the seeders to populate the database with default roles, an admin account, and dummy clinic data (Doctors, Patients, Appointments).
+**Manual** (tiga terminal, masing-masing sekali saja):
 ```bash
-php artisan migrate --seed
-```
-*Note: The seeders automatically create dummy accounts using `@janjicare.com` emails with the default password `p@5wo0rd`.*
-
-### 5. Running the Application
-To run JanjiCare locally, you need to start multiple services. Open separate terminal windows/tabs for the following commands:
-
-**Terminal 1: Laravel Backend**
-```bash
-php artisan serve
+cd services/queue-service && npm run dev    # http://localhost:3002
+cd backend && npm run dev                   # http://localhost:3000
+cd janjicare-frontend && npm run dev        # http://localhost:5173
 ```
 
-**Terminal 2: Frontend Asset Bundler**
-```bash
-npm run dev
-```
+Cek kesehatan: `http://localhost:3000/api/health` dan `http://localhost:3002/api/v1/queue/health`. Di aplikasi: **Admin → Pengaturan → Status Layanan**.
 
-**Terminal 3: WebSockets (Laravel Reverb)**
-Required for real-time patient queue updates and chat.
-```bash
-php artisan reverb:start
-```
+## Pemecahan masalah
 
-### 6. Setting up Telehealth (LiveKit)
-JanjiCare uses LiveKit for WebRTC virtual consultations. A docker-compose file is provided in the project root to spin up a local instance.
-
-Open a new terminal and navigate to the root of the project (outside `clinic-app/`):
-```bash
-cd ..
-docker-compose -f livekit-docker-compose.yml up -d
-```
-Ensure your `.env` inside `clinic-app` contains the correct LiveKit keys:
-```ini
-LIVEKIT_URL=http://localhost:7880
-LIVEKIT_API_KEY=lk_clinic_live_key
-LIVEKIT_API_SECRET=lk_clinic_live_secret_73f2a1b9c8d5e4f
-```
-
-You can now access the application at `http://localhost:8000`.
-
----
-
-## Production Deployment
-
-Deploying JanjiCare to a production Virtual Private Server (VPS) is streamlined via Docker and our automated deployment scripts.
-
-### Server Requirements
-Your VPS (e.g., Ubuntu 22.04/24.04) must have the following installed:
-- Docker Engine
-- Docker Compose v2
-- OpenSSH Server
-
-### Automated Deployment (Windows Host)
-If you are deploying from a Windows machine, you can use the provided PowerShell deployment script.
-
-1. Configure your `.env.vps` file in the project root with your production credentials.
-2. Ensure you have an SSH key pair set up and authorized on your VPS.
-3. Edit the `deploy.ps1` script to point to your VPS IP address and user.
-4. Run the script:
-   ```powershell
-   .\deploy.ps1
-   ```
-
-**What `deploy.ps1` does:**
-1. Packages the `clinic-app/` source code locally (ignoring large folders like `vendor` and `node_modules`).
-2. Uploads the zipped package to your VPS securely via `scp`.
-3. SSHs into your VPS, unzips the payload, and executes a Docker build step.
-4. Restarts the Docker containers (`janjicare_app`, `postgres`, `redis`, `reverb`, `livekit`) safely without downtime.
-
-### SSL / HTTPS
-For WebRTC (LiveKit) and Secure WebSockets (Reverb) to work in modern browsers, **HTTPS is strictly required**. 
-It is highly recommended to place your VPS behind a reverse proxy like **Nginx**, **Caddy**, or **Cloudflare** to terminate SSL certificates automatically.
-
----
-
-## Troubleshooting
-
-- **WebSockets not connecting?** Ensure `REVERB_HOST` matches your domain/IP and the port is open in your firewall.
-- **Camera/Microphone access denied?** Browsers require HTTPS or `localhost` to access media devices. If you are accessing the app over a local network IP (e.g. `192.168.x.x`), you must use HTTPS.
-- **CSS not updating?** If you are running locally without `npm run dev`, ensure you build the assets using `npm run build`.
-
-For more information or help, please refer to the main repository issues or submit a pull request!
+| Gejala | Penyebab & solusi |
+|---|---|
+| `Port 3000 sudah dipakai` | Ada server lama yang masih berjalan. Tutup terminalnya atau `Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess -Force` |
+| Login: "Tidak dapat terhubung ke backend" | Backend belum berjalan, atau frontend berjalan di port selain yang ada di `FRONTEND_URL` |
+| Daftar: "Email signups are disabled" | Aktifkan *Enable email provider* di Supabase |
+| Login: "Email belum dikonfirmasi" | Klik tautan di email, atau jalankan `update auth.users set email_confirmed_at = now() where email = '...';` |
+| Check-in gagal membuat nomor antrean | Queue service belum berjalan, atau `QUEUE_INTERNAL_TOKEN` berbeda di kedua `.env` |
+| `relation "queue_tickets" does not exist` | Migrasi `02_security_status_queue.sql` belum dijalankan |

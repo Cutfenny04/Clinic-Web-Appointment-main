@@ -14,4 +14,8 @@ Fitur di bawah ini **kode sumbernya tetap ada** di `janjicare-frontend/src`, tet
 | Notifikasi | `components/NotificationBell.jsx` | Tabel `notifications` + pengiriman event (SQS → Lambda → email/SMS) |
 | Data medis saat registrasi (NIK, golongan darah, alergi) | (dihapus dari form, ada di sumber TSX Laravel) | Kolom profil medis + persetujuan privasi data kesehatan |
 
-Sumber TypeScript asli semua halaman ini ada di `clinic-app/resources/js/**/*.tsx` dan di riwayat Git. Sebelum folder Laravel dihapus, sumber tersebut tetap dapat diambil dari tag `legacy-laravel`.
+Sumber TypeScript asli halaman-halaman ini (dari versi Laravel) dapat diambil dari tag Git `legacy-laravel`, folder `clinic-app/resources/js/`:
+
+```bash
+git show legacy-laravel:clinic-app/resources/js/Pages/Admin/Pharmacy.tsx
+```

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import Head from "@/components/Head";
+import { BrandMark } from "@/components/Brand";
 import { apiService } from "@/services/api";
 import { motion, AnimatePresence } from "framer-motion";
 export default function QueueTV() {
@@ -123,9 +124,7 @@ export default function QueueTV() {
     title="Ganti Tema"
   />{
     /* Header */
-  }<div className={`backdrop-blur-md border-b p-3 sm:p-4 md:p-6 flex flex-row justify-between items-center shadow-lg transition-all duration-500 ${isDarkMode ? "bg-slate-800/80 border-slate-700" : "bg-white/80 border-gray-200"}`}><div className="flex items-center gap-3 md:gap-6 ml-1 md:ml-4"><div className="hidden sm:flex w-12 h-12 md:w-16 md:h-16 bg-blue-700 rounded-2xl items-center justify-center text-white font-bold text-3xl md:text-4xl shadow-md border border-blue-400/20">
-                        +
-                    </div><div><h1 className={`text-lg sm:text-2xl md:text-4xl font-bold tracking-tight text-left ${isDarkMode ? "text-white" : "text-slate-900"}`}>Antrean Klinik Langsung</h1><p className={`text-xs sm:text-sm md:text-lg mt-0.5 md:mt-1 flex items-center justify-start gap-1.5 md:gap-2 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}><span className="w-1.5 h-1.5 md:w-3 md:h-3 bg-emerald-500 rounded-full animate-pulse" />
+  }<div className={`backdrop-blur-md border-b p-3 sm:p-4 md:p-6 flex flex-row justify-between items-center shadow-lg transition-all duration-500 ${isDarkMode ? "bg-slate-800/80 border-slate-700" : "bg-white/80 border-gray-200"}`}><div className="flex items-center gap-3 md:gap-6 ml-1 md:ml-4"><BrandMark size={56} className="hidden sm:inline-flex !text-3xl" /><div><h1 className={`text-lg sm:text-2xl md:text-4xl font-bold tracking-tight text-left ${isDarkMode ? "text-white" : "text-slate-900"}`}>Antrean Klinik Langsung</h1><p className={`text-xs sm:text-sm md:text-lg mt-0.5 md:mt-1 flex items-center justify-start gap-1.5 md:gap-2 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}><span className="w-1.5 h-1.5 md:w-3 md:h-3 bg-emerald-500 rounded-full animate-pulse" />
                             Pembaruan Langsung Aktif
                         </p></div></div><div className={`text-xl sm:text-3xl md:text-5xl font-bold tracking-tighter tabular-nums py-0 md:py-4 mr-1 md:mr-4 z-10 pointer-events-none ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>{currentTime}</div></div>{
     /* Main Content */
