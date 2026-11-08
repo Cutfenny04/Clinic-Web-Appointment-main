@@ -4,7 +4,7 @@ import Modal from "@/components/Modal";
 import { useApi } from "@/hooks/useApi";
 import { apiService } from "@/services/api";
 import { PageHeader, Card, AsyncBlock, DataTable, StatusBadge, Button, ConfirmDialog, SearchInput } from "@/components/ui";
-import AppointmentDetailModal from "@/components/shared/AppointmentDetailModal";
+import { AppointmentDetailContent } from "@/components/shared/AppointmentDetailModal";
 import { formatDate, formatDateLong, formatTimeRange, initials } from "@/utils/format";
 import toast from "@/lib/toast";
 
@@ -13,22 +13,26 @@ function PatientDetail({ patient, onClose }) {
     () => apiService.appointments.list({ patient_id: patient.id }), [patient?.id], { enabled: !!patient }
   );
   const [detail, setDetail] = useState(null);
+  // Detail janji temu ditampilkan di DALAM modal yang sama (tanpa dialog bertumpuk)
   return (
     <Modal show={!!patient} onClose={onClose} maxWidth="3xl">
-      <div className="p-6">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{patient?.name}</h3>
-        <p className="text-sm text-gray-500 mb-4">{patient?.email} · {patient?.phone || "Tanpa nomor telepon"} · Terdaftar {formatDate(patient?.created_at)}</p>
-        <AsyncBlock loading={loading} error={error} onRetry={reload} empty={!data?.length} emptyTitle="Belum ada janji temu">
-          <DataTable rows={data || []} onRowClick={(a) => setDetail(a.id)} columns={[
-            { key: "date", label: "Tanggal", render: (a) => formatDateLong(a.schedule_date) },
-            { key: "time", label: "Jam", render: (a) => formatTimeRange(a.start_time, a.end_time) },
-            { key: "doctor", label: "Dokter", render: (a) => a.doctor_name },
-            { key: "status", label: "Status", render: (a) => <StatusBadge status={a.status} /> },
-          ]} />
-        </AsyncBlock>
-        <div className="mt-6 flex justify-end"><Button variant="secondary" onClick={onClose}>Tutup</Button></div>
-      </div>
-      <AppointmentDetailModal appointmentId={detail} onClose={() => setDetail(null)} />
+      {detail ? (
+        <AppointmentDetailContent appointmentId={detail} onClose={() => setDetail(null)} closeLabel="← Kembali ke riwayat" />
+      ) : (
+        <div className="p-6">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{patient?.name}</h3>
+          <p className="text-sm text-gray-500 mb-4">{patient?.email} · {patient?.phone || "Tanpa nomor telepon"} · Terdaftar {formatDate(patient?.created_at)}</p>
+          <AsyncBlock loading={loading} error={error} onRetry={reload} empty={!data?.length} emptyTitle="Belum ada janji temu">
+            <DataTable rows={data || []} onRowClick={(a) => setDetail(a.id)} columns={[
+              { key: "date", label: "Tanggal", render: (a) => formatDateLong(a.schedule_date) },
+              { key: "time", label: "Jam", render: (a) => formatTimeRange(a.start_time, a.end_time) },
+              { key: "doctor", label: "Dokter", render: (a) => a.doctor_name },
+              { key: "status", label: "Status", render: (a) => <StatusBadge status={a.status} /> },
+            ]} />
+          </AsyncBlock>
+          <div className="mt-6 flex justify-end"><Button variant="secondary" onClick={onClose}>Tutup</Button></div>
+        </div>
+      )}
     </Modal>
   );
 }

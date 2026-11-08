@@ -4,8 +4,11 @@ import { apiService } from "@/services/api";
 import { StatusBadge, LoadingState, ErrorState, Button } from "@/components/ui";
 import { formatDateLong, formatTimeRange, formatDateTime, formatStatus } from "@/utils/format";
 
-/** Detail janji temu + riwayat perubahan status (dari tabel appointment_status_history) */
-export default function AppointmentDetailModal({ appointmentId, onClose, actions }) {
+/**
+ * Isi detail janji temu + riwayat status. Dapat ditanam di dalam modal lain
+ * (hindari dialog bertumpuk: Headless UI tidak mengembalikan Escape ke dialog bawah).
+ */
+export function AppointmentDetailContent({ appointmentId, onClose, actions, closeLabel = "Tutup" }) {
   const { data: a, loading, error, reload } = useApi(
     () => apiService.appointments.get(appointmentId), [appointmentId], { enabled: !!appointmentId }
   );
@@ -16,7 +19,6 @@ export default function AppointmentDetailModal({ appointmentId, onClose, actions
     </div>
   );
   return (
-    <Modal show={!!appointmentId} onClose={onClose} maxWidth="lg">
       <div className="p-6">
         <div className="flex items-start justify-between gap-3 mb-4">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">Detail Janji Temu</h3>
@@ -53,9 +55,17 @@ export default function AppointmentDetailModal({ appointmentId, onClose, actions
         )}
         <div className="mt-6 flex flex-wrap justify-end gap-2">
           {a && actions?.(a, reload)}
-          <Button variant="secondary" onClick={onClose}>Tutup</Button>
+          <Button variant="secondary" onClick={onClose}>{closeLabel}</Button>
         </div>
       </div>
+  );
+}
+
+/** Detail janji temu dalam modal tersendiri */
+export default function AppointmentDetailModal({ appointmentId, onClose, actions }) {
+  return (
+    <Modal show={!!appointmentId} onClose={onClose} maxWidth="lg">
+      {appointmentId && <AppointmentDetailContent appointmentId={appointmentId} onClose={onClose} actions={actions} />}
     </Modal>
   );
 }

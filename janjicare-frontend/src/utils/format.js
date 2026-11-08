@@ -6,7 +6,7 @@
 export const STATUS_LABELS = {
   pending: "Menunggu Konfirmasi",
   confirmed: "Dikonfirmasi",
-  checked_in: "Sudah Daftar Ulang",
+  checked_in: "Sudah Check-in",
   in_progress: "Sedang Diperiksa",
   completed: "Selesai",
   cancelled: "Dibatalkan",

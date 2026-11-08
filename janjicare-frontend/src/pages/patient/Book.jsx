@@ -18,6 +18,9 @@ export default function PatientBook() {
     () => apiService.schedules.list({ doctor_id: doctorId, is_active: "true", from: today, to: addDays(today, 60) }),
     [doctorId], { enabled: !!doctorId }
   );
+  // Sesi yang sudah pernah dipesan pasien (selain yang dibatalkan) tidak bisa dipesan lagi
+  const mine = useApi(() => apiService.appointments.mine(), []);
+  const bookedByMe = useMemo(() => new Set((mine.data || []).filter((a) => a.status !== "cancelled").map((a) => a.schedule_id)), [mine.data]);
   const [date, setDate] = useState("");
   const [scheduleId, setScheduleId] = useState("");
   const [complaint, setComplaint] = useState("");
@@ -30,7 +33,7 @@ export default function PatientBook() {
   const doctor = (doctors.data || []).find((d) => d.id === doctorId);
   const nowLocal = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
   const usable = useMemo(() => (schedules.data || []).filter((s) => !(s.schedule_date === today && s.end_time.slice(0, 5) <= nowLocal)), [schedules.data, today, nowLocal]);
-  const available = useMemo(() => new Set(usable.filter((s) => !s.is_full).map((s) => s.schedule_date)), [usable]);
+  const available = useMemo(() => new Set(usable.filter((s) => !s.is_full && !bookedByMe.has(s.id)).map((s) => s.schedule_date)), [usable, bookedByMe]);
   const sessions = usable.filter((s) => s.schedule_date === date);
   const schedule = usable.find((s) => s.id === scheduleId);
   const step = result ? 3 : !doctorId ? 0 : !schedule ? 1 : 2;
@@ -52,7 +55,7 @@ export default function PatientBook() {
     setSubmitting(true); setSubmitError(null);
     try {
       const r = await apiService.appointments.create({ schedule_id: scheduleId, complaint: complaint.trim() });
-      setResult(r.data); setConfirm(false);
+      setResult(r.data); setConfirm(false); mine.reload({ silent: true });
     } catch (e) {
       setSubmitError(e.message);
       schedules.reload({ silent: true }); // kuota mungkin berubah
@@ -113,23 +116,32 @@ export default function PatientBook() {
           <Card title="2. Tanggal & Sesi">
             {!doctorId ? <EmptyState title="Pilih dokter terlebih dahulu" /> : (
               <AsyncBlock loading={schedules.loading} error={schedules.error} onRetry={schedules.reload} empty={!available.size}
-                emptyTitle="Belum ada jadwal tersedia" emptyDescription="Dokter ini belum membuka jadwal atau semua kuota penuh dalam 60 hari ke depan.">
+                emptyTitle="Tidak ada sesi yang bisa dipesan"
+                emptyDescription={(schedules.data || []).some((x) => bookedByMe.has(x.id))
+                  ? "Sesi yang tersedia sudah Anda pesan. Lihat di menu Janji Temu Saya."
+                  : "Dokter ini belum membuka jadwal atau semua kuota penuh dalam 60 hari ke depan."}>
                 <MiniCalendar value={date} onChange={setDate} available={available} />
                 {date && (
                   <div className="mt-5">
                     <p className="text-sm font-bold text-gray-900 dark:text-white mb-2">Sesi pada {formatDateLong(date)}</p>
                     <div className="space-y-2" role="radiogroup" aria-label="Pilih sesi praktik">
-                      {sessions.map((s) => (
-                        <button key={s.id} type="button" role="radio" aria-checked={scheduleId === s.id} disabled={s.is_full}
+                      {sessions.map((s) => {
+                        const mineHere = bookedByMe.has(s.id);
+                        const blocked = s.is_full || mineHere;
+                        return (
+                        <button key={s.id} type="button" role="radio" aria-checked={scheduleId === s.id} disabled={blocked}
                           onClick={() => setScheduleId(s.id)}
                           className={cx("w-full flex items-center justify-between p-3 rounded-xl border text-sm font-semibold transition-all",
                             scheduleId === s.id ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
-                              : s.is_full ? "border-gray-100 dark:border-slate-700 text-gray-300 cursor-not-allowed"
+                              : blocked ? "border-gray-100 dark:border-slate-700 text-gray-300 cursor-not-allowed"
                                 : "border-gray-200 dark:border-slate-600 hover:border-blue-300")}>
                           <span>{formatTimeRange(s.start_time, s.end_time)}</span>
-                          <span className={s.is_full ? "text-rose-500" : "text-teal-600"}>{s.is_full ? "Penuh" : `Sisa ${s.remaining} dari ${s.capacity}`}</span>
+                          <span className={mineHere ? "text-gray-500" : s.is_full ? "text-rose-500" : "text-teal-600"}>
+                            {mineHere ? "Sudah Anda pesan" : s.is_full ? "Penuh" : `Sisa ${s.remaining} dari ${s.capacity}`}
+                          </span>
                         </button>
-                      ))}
+                        );
+                      })}
                     </div>
                     {errors.schedule && <p className="mt-1 text-xs text-rose-600">{errors.schedule}</p>}
                   </div>

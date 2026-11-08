@@ -4,7 +4,7 @@ import Modal from "@/components/Modal";
 import { useApi } from "@/hooks/useApi";
 import { apiService } from "@/services/api";
 import { PageHeader, Card, AsyncBlock, DataTable, SearchInput, StatusBadge, Button } from "@/components/ui";
-import AppointmentDetailModal from "@/components/shared/AppointmentDetailModal";
+import { AppointmentDetailContent } from "@/components/shared/AppointmentDetailModal";
 import { formatDateLong, initials } from "@/utils/format";
 
 /** Daftar pasien = pasien yang pernah/akan berkonsultasi dengan dokter ini (dibatasi backend & RLS). */
@@ -44,8 +44,11 @@ export default function DoctorPatients() {
           ]} />
         </AsyncBlock>
       </Card>
-      <Modal show={!!selected} onClose={() => setSelected(null)} maxWidth="2xl">
-        {selected && (
+      <Modal show={!!selected} onClose={() => { setSelected(null); setDetail(null); }} maxWidth="2xl">
+        {selected && detail && (
+          <AppointmentDetailContent appointmentId={detail} onClose={() => setDetail(null)} closeLabel="← Kembali ke daftar kunjungan" />
+        )}
+        {selected && !detail && (
           <div className="p-6">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">{selected.name}</h3>
             <p className="text-sm text-gray-500 mb-4">{selected.phone || "–"} · {selected.email || "–"}</p>
@@ -58,7 +61,6 @@ export default function DoctorPatients() {
           </div>
         )}
       </Modal>
-      <AppointmentDetailModal appointmentId={detail} onClose={() => setDetail(null)} />
     </SidebarLayout>
   );
 }
