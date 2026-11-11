@@ -1,0 +1,8 @@
+# /opt/janjicare/config/postgrest.conf — PostgREST di EC2 "app" (dipakai backend lewat supabase-js)
+db-uri = "postgres://authenticator:<API_DB_PASSWORD>@<ENDPOINT_RDS>:5432/janjicare?sslmode=require"
+db-schemas = "public"
+db-anon-role = "anon"
+db-pool = 10
+jwt-secret = "<JWT_SECRET>"
+server-host = "127.0.0.1"
+server-port = 3001

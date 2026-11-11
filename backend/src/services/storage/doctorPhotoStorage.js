@@ -9,9 +9,9 @@ import { createSupabaseStorageProvider } from "./supabaseProvider.js";
  *   uploadDoctorPhoto(), getDoctorPhotoUrl(), deleteDoctorPhoto()
  * Database menyimpan *path* objek ("<doctor_id>/<nama-unik>.jpg"), bukan URL penyedia.
  *
- * Pindah ke Amazon S3 nanti: buat provider baru dengan antarmuka yang sama
- * ({ put(path, buffer, contentType), remove(path) }), pilih lewat STORAGE_PROVIDER=s3,
- * dan set PUBLIC_PHOTO_BASE_URL ke domain CloudFront/S3. Frontend tidak perlu diubah.
+ * Provider: STORAGE_PROVIDER=supabase (default, Supabase Storage) atau s3 (Amazon S3,
+ * lihat s3Provider.js). Untuk S3 set PUBLIC_PHOTO_BASE_URL ke domain CloudFront.
+ * Frontend tidak perlu diubah.
  */
 
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024; // 2 MB
@@ -65,11 +65,14 @@ export function buildPhotoPath(doctorId, ext) {
 let provider = null;
 /** Untuk pengujian: ganti provider dengan versi palsu. */
 export function setStorageProvider(p) { provider = p; }
-function getProvider() {
+export const STORAGE_PROVIDER = (process.env.STORAGE_PROVIDER || "supabase").toLowerCase();
+async function getProvider() {
   if (provider) return provider;
-  const name = (process.env.STORAGE_PROVIDER || "supabase").toLowerCase();
-  if (name === "supabase") provider = createSupabaseStorageProvider(BUCKET);
-  else throw new ApiError(503, `Penyedia penyimpanan "${name}" belum dikonfigurasi di server.`);
+  if (STORAGE_PROVIDER === "supabase") provider = createSupabaseStorageProvider(BUCKET);
+  else if (STORAGE_PROVIDER === "s3") {
+    const { createS3StorageProvider } = await import("./s3Provider.js"); // SDK AWS hanya dimuat bila dipakai
+    provider = createS3StorageProvider();
+  } else throw new ApiError(503, `Penyedia penyimpanan "${STORAGE_PROVIDER}" belum dikonfigurasi di server.`);
   return provider;
 }
 
@@ -81,7 +84,7 @@ function getProvider() {
 export async function uploadDoctorPhoto({ doctorId, buffer, contentType }) {
   const { contentType: type, ext } = validatePhoto(buffer, contentType);
   const path = buildPhotoPath(doctorId, ext);
-  await getProvider().put(path, buffer, type);
+  await (await getProvider()).put(path, buffer, type);
   return { path, contentType: type, size: buffer.length };
 }
 
@@ -98,5 +101,5 @@ export function getDoctorPhotoUrl(path) {
 /** Hapus file. Tidak melempar error bila file sudah tidak ada. */
 export async function deleteDoctorPhoto(path) {
   if (!path) return;
-  await getProvider().remove(path);
+  await (await getProvider()).remove(path);
 }

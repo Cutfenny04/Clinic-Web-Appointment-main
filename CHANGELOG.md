@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-11-11
+
+### Added
+- Deploy AWS Academy Learner Lab (`deploy/aws/`, `docs/DEPLOY_AWS.md`): EC2 (app + queue), Amazon RDS PostgreSQL, S3 + CloudFront, CloudWatch.
+- Supabase Auth (GoTrue) & PostgREST dijalankan sendiri di EC2 dengan database RDS — kode aplikasi tidak berubah.
+- `deploy/aws/rds/00_bootstrap.sql` & `99_service_role_policies.sql` untuk master user RDS yang bukan superuser.
+- Provider Amazon S3 untuk foto dokter (`STORAGE_PROVIDER=s3`) + tes dengan SDK AWS.
+- `TRUST_PROXY` (backend) dan `VITE_SUPABASE_URL=same-origin` (frontend) untuk deploy di belakang CloudFront.
+
 ## [2.1.0] - 2026-11-08
 
 ### Added

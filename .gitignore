@@ -71,3 +71,7 @@ desktop.ini
 
 # Data seeder berisi kata sandi akun uji — jangan di-commit
 backend/scripts/data/*.json
+
+# rahasia deploy AWS (deploy/aws/scripts/generate-keys.mjs)
+rahasia.env
+*.production.local

@@ -84,7 +84,7 @@ export default function AdminDoctors() {
         ? "Akun dokter berhasil dibuat. Berikan email & kata sandi awal kepada dokter."
         : "Data dokter diperbarui.");
       if (withPhoto?.photo_url && form.mode === "create") toast.success("Foto profil tersimpan.");
-      setForm(null); reload();
+      setForm(null); reload({ silent: true });
     } catch (err) {
       // Data dokter sudah tersimpan; foto gagal → tetap di formulir (mode ubah) agar admin bisa mencoba lagi.
       setPhotoError(`Data dokter tersimpan, tetapi foto gagal diunggah: ${err.message}`);

@@ -62,8 +62,11 @@ if (flag("--cek")) process.exit(0);
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   fail("SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY wajib ada di backend/.env");
 }
+// Setiap permintaan ke Supabase dibatasi 20 detik agar seeder tidak "diam" bila koneksi macet
+const fetchWithTimeout = (url, opts = {}) => fetch(url, { ...opts, signal: opts.signal ?? AbortSignal.timeout(20000) });
 const admin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
+  global: { fetch: fetchWithTimeout },
 });
 
 const todayJakarta = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
@@ -81,6 +84,15 @@ function findPhoto(name) {
 }
 const TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
 const storage = flag("--foto") ? await import("../src/services/storage/doctorPhotoStorage.js") : null;
+// Supabase Storage: unggahan memakai klien seeder (dengan batas waktu yang sama).
+// STORAGE_PROVIDER=s3 (AWS): pakai provider S3 bawaan backend.
+if (storage?.STORAGE_PROVIDER === "supabase") storage.setStorageProvider({
+  async put(p, buf, type) {
+    const { error } = await admin.storage.from(storage.BUCKET).upload(p, buf, { contentType: type, upsert: false });
+    if (error) throw new Error(/bucket not found/i.test(error.message) ? "bucket doctor-photos belum ada — jalankan sql/03_doctor_photos.sql" : error.message);
+  },
+  async remove(p) { await admin.storage.from(storage.BUCKET).remove([p]); },
+});
 
 const results = [];
 /** Ulangi panggilan bila koneksi ke Supabase putus sesaat (fetch failed / timeout). */
@@ -101,6 +113,7 @@ async function retry(fn, label) {
 async function seedOne(i, d, results) {
   let status;
   let userId;
+  console.log("   · akun login");
   const { data: created, error } = await retry(() => admin.auth.admin.createUser({
     email: d.email, password: d.password, email_confirm: true,
     user_metadata: { full_name: d.full_name, phone: d.phone || null },
@@ -114,6 +127,7 @@ async function seedOne(i, d, results) {
     userId = created.user.id; status = "dibuat";
   }
 
+  console.log("   · profil & detail praktik");
   const { error: pErr } = await admin.from("profiles")
     .update({ role: "doctor", full_name: d.full_name, phone: d.phone || null, is_active: true }).eq("id", userId);
   if (pErr) { results.push([d.full_name, "✖ profil: " + pErr.message]); return; }
@@ -126,6 +140,7 @@ async function seedOne(i, d, results) {
 
   let jadwal = "";
   if (flag("--jadwal")) {
+    console.log("   · jadwal praktik");
     const start = todayJakarta();
     let made = 0;
     for (let day = 1; day <= 14; day++) {
@@ -144,6 +159,7 @@ async function seedOne(i, d, results) {
   }
   let foto = "";
   if (storage) {
+    console.log("   · foto profil");
     const file = findPhoto(d.full_name);
     const { data: det } = await admin.from("doctor_details").select("photo_path").eq("user_id", userId).maybeSingle();
     if (!file) foto = " · foto tidak ditemukan";
@@ -169,8 +185,9 @@ for (const [i, d] of doctors.entries()) {
     await seedOne(i, d, results);
   } catch (e) {
     // Satu dokter gagal tidak boleh menghentikan dokter berikutnya
-    results.push([d.full_name, `✖ ${e.message}`]);
+    results.push([d.full_name, `✖ ${e.name === "TimeoutError" ? "Supabase tidak merespons dalam 20 detik" : e.message}`]);
   }
+  console.log(`   ${results.at(-1)[1]}`);
 }
 
 console.log("");

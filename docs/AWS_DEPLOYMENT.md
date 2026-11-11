@@ -1,5 +1,8 @@
 # Rencana Deployment AWS & Migrasi Supabase → Amazon RDS
 
+> **Panduan langkah demi langkah untuk AWS Academy Learner Lab: [DEPLOY_AWS.md](./DEPLOY_AWS.md).**
+> Dokumen ini berisi latar belakang & pilihan arsitektur.
+
 ## Peta komponen
 
 | Sekarang | AWS | Catatan |
@@ -46,11 +49,11 @@ Seluruh akses storage di backend melewati `backend/src/services/storage/doctorPh
 
 1. Buat bucket S3 privat + distribusi CloudFront (Origin Access Control) untuk baca publik.
 2. Salin objek: unduh isi bucket `doctor-photos` dari Supabase lalu `aws s3 sync ./doctor-photos s3://<bucket>/` (struktur folder tetap sama, jadi `photo_path` di database tidak berubah).
-3. Tambahkan provider S3 (`put` = `PutObjectCommand`, `remove` = `DeleteObjectCommand` dari `@aws-sdk/client-s3`) di folder `services/storage/` dengan antarmuka yang sama seperti `supabaseProvider.js`, lalu daftarkan untuk `STORAGE_PROVIDER=s3`. Kredensial lewat IAM Role EC2, bukan access key di `.env`.
+3. Set `STORAGE_PROVIDER=s3`, `S3_BUCKET`, `AWS_REGION`, `S3_KEY_PREFIX=doctor-photos/` — provider `backend/src/services/storage/s3Provider.js` sudah tersedia. Kredensial lewat IAM Role EC2 (LabInstanceProfile), bukan access key di `.env`.
 4. Set `PUBLIC_PHOTO_BASE_URL=https://<domain-cloudfront>` — `photo_url` otomatis mengarah ke CloudFront.
 5. Validasi batas 2 MB & tipe file tetap dilakukan backend (magic bytes), tidak bergantung pada penyedia.
 
-Catatan: provider S3 **belum** diimplementasikan/diuji di repositori ini; yang berjalan dan teruji saat ini adalah Supabase Storage.
+Provider S3 diuji dengan SDK AWS sungguhan terhadap server S3 tiruan (`backend/tests/s3Provider.test.js`) dan lewat uji ujung-ke-ujung pada emulasi arsitektur AWS.
 
 ## Integrasi SQS / Lambda (opsional, tanpa mengubah frontend)
 

@@ -1,0 +1,24 @@
+{
+  "agent": { "run_as_user": "root" },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          { "file_path": "/var/log/janjicare/backend.log",   "log_group_name": "/janjicare/backend",   "log_stream_name": "{instance_id}" },
+          { "file_path": "/var/log/janjicare/auth.log",      "log_group_name": "/janjicare/auth",      "log_stream_name": "{instance_id}" },
+          { "file_path": "/var/log/janjicare/postgrest.log", "log_group_name": "/janjicare/postgrest", "log_stream_name": "{instance_id}" },
+          { "file_path": "/var/log/janjicare/queue.log",     "log_group_name": "/janjicare/queue",     "log_stream_name": "{instance_id}" },
+          { "file_path": "/var/log/nginx/access.log",        "log_group_name": "/janjicare/nginx",     "log_stream_name": "{instance_id}" }
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "namespace": "JanjiCare",
+    "metrics_collected": {
+      "mem":  { "measurement": ["mem_used_percent"] },
+      "disk": { "measurement": ["used_percent"], "resources": ["/"] }
+    },
+    "append_dimensions": { "InstanceId": "${aws:InstanceId}" }
+  }
+}

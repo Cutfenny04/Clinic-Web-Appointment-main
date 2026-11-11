@@ -34,7 +34,8 @@ app.use(
 );
 
 // ── Body parser ───────────────────────────────────────────────────
-app.set("trust proxy", 1); // di belakang ALB/Nginx di AWS
+// Jumlah proxy di depan backend: 1 = Nginx saja; 2 = CloudFront → Nginx (deploy AWS)
+app.set("trust proxy", Number(process.env.TRUST_PROXY ?? 1));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 

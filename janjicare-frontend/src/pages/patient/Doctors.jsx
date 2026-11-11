@@ -6,7 +6,7 @@ import { PageHeader, Card, SearchInput, Button, Field, Select, EmptyState, Error
 import DoctorCard from "@/components/shared/DoctorCard";
 import { todayJakarta, addDays } from "@/utils/format";
 
-const PAGE = 8;
+const PAGE = 12;
 const AVAIL = [
   ["", "Semua jadwal"],
   ["today", "Tersedia hari ini"],

@@ -61,7 +61,7 @@ Backend API (Node.js + Express)  ──── X-Internal-Token ────▶  
 
 ## Menjalankan secara lokal
 
-Langkah lengkap ada di **[INSTALLATION.md](./INSTALLATION.md)**. Ringkasnya:
+Langkah lengkap ada di **[INSTALLATION.md](./INSTALLATION.md)**. Deploy ke AWS (Learner Lab: EC2, RDS, S3, CloudFront, CloudWatch): **[docs/DEPLOY_AWS.md](./docs/DEPLOY_AWS.md)**. Ringkasnya:
 
 ```bash
 # 1. Jalankan backend/sql/01_schema_and_rls.sql, 02_security_status_queue.sql, lalu 03_doctor_photos.sql di Supabase SQL Editor

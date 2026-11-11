@@ -1,0 +1,4 @@
+
+# skrip deploy dijalankan di Linux (EC2) — wajib LF
+*.sh text eol=lf
+deploy/** text eol=lf
