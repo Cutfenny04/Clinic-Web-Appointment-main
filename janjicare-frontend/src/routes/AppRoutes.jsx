@@ -45,6 +45,7 @@ const DoctorProfile = lazy(() => import("../pages/doctor/Profile"));
 const PatientDashboard = lazy(() => import("../pages/patient/Dashboard"));
 const PatientDoctors = lazy(() => import("../pages/patient/Doctors"));
 const PatientDoctorDetail = lazy(() => import("../pages/patient/DoctorDetail"));
+const Messages = lazy(() => import("../pages/shared/Messages"));
 const PatientBook = lazy(() => import("../pages/patient/Book"));
 const PatientAppointments = lazy(() => import("../pages/patient/Appointments"));
 const PatientQueue = lazy(() => import("../pages/patient/Queue"));
@@ -81,6 +82,7 @@ export default function AppRoutes() {
         <Route path="/admin/schedules" element={admin(<AdminSchedules />)} />
         <Route path="/admin/appointments" element={admin(<AdminAppointments />)} />
         <Route path="/admin/queue" element={admin(<AdminQueue />)} />
+        <Route path="/admin/messages" element={admin(<Messages />)} />
         <Route path="/admin/reports" element={admin(<AdminReports />)} />
         <Route path="/admin/settings" element={admin(<AdminSettings />)} />
 
@@ -90,6 +92,7 @@ export default function AppRoutes() {
         <Route path="/doctor/schedules" element={doctor(<DoctorSchedules />)} />
         <Route path="/doctor/patients" element={doctor(<DoctorPatients />)} />
         <Route path="/doctor/queue" element={doctor(<DoctorQueue />)} />
+        <Route path="/doctor/messages" element={doctor(<Messages />)} />
         <Route path="/doctor/consultation" element={doctor(<DoctorConsultation />)} />
         <Route path="/doctor/history" element={doctor(<DoctorHistory />)} />
         <Route path="/doctor/profile" element={doctor(<DoctorProfile />)} />
@@ -103,6 +106,7 @@ export default function AppRoutes() {
         <Route path="/patient/book" element={patient(<PatientBook />)} />
         <Route path="/patient/appointments" element={patient(<PatientAppointments />)} />
         <Route path="/patient/queue" element={patient(<PatientQueue />)} />
+        <Route path="/patient/messages" element={patient(<Messages />)} />
         <Route path="/patient/history" element={patient(<PatientHistory />)} />
         <Route path="/patient/profile" element={patient(<PatientProfile />)} />
         <Route path="/patient/schedules" element={<Navigate to="/patient/book" replace />} />

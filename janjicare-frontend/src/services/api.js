@@ -117,6 +117,15 @@ export const apiService = {
     callNext: (data = {}) => api.post("/queue/call", data),
     setStatus: (ticketId, status) => api.patch(`/queue/${ticketId}/status`, { status }),
   },
+  chat: {
+    conversations: () => api.get("/chat/conversations"),
+    unread: () => api.get("/chat/unread"),
+    contacts: (search) => api.get("/chat/contacts", { params: { search: search || undefined } }),
+    start: (kind, otherId) => api.post("/chat/conversations", { kind, other_id: otherId ?? null }),
+    messages: (id, after = 0) => api.get(`/chat/conversations/${id}/messages`, { params: { after: after || undefined } }),
+    send: (id, body) => api.post(`/chat/conversations/${id}/messages`, { body }),
+    markRead: (id) => api.post(`/chat/conversations/${id}/read`),
+  },
 };
 
 export default api;

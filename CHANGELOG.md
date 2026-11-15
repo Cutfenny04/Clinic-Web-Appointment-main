@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-11-15
+
+### Added
+- Fitur **Pesan** (chat teks): pasien ↔ dokter dan pasien ↔ admin klinik (`backend/sql/04_chat.sql`, `/api/v1/chat`, halaman `/patient/messages`, `/doctor/messages`, `/admin/messages`). Lihat `docs/FITUR_PESAN.md`.
+- Chat dokter hanya untuk pasien yang pernah membuat janji temu (tidak dibatalkan) dengan dokter itu; admin tidak dapat membaca chat dokter–pasien. Aturan ditegakkan di database (RLS + fungsi `chat_*`).
+- Menu "Pesan" dengan badge jumlah pesan belum dibaca untuk ketiga peran.
+
+### Changed
+- Polling GET `/api/v1/chat/*` dikecualikan dari limiter global per IP dan diganti limiter per pengguna (240/menit), agar banyak pengguna di satu jaringan tidak saling memblokir.
+- Error database P0030 → 403 dan P0031 → 400 (`dbError.js`).
+
 ## [2.2.0] - 2026-11-11
 
 ### Added

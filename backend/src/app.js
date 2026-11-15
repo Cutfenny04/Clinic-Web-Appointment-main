@@ -16,6 +16,7 @@ import appointmentsRoutes from "./modules/appointments/appointments.routes.js";
 import usersRoutes from "./modules/users/users.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
 import queueRoutes from "./modules/queue/queue.routes.js";
+import chatRoutes from "./modules/chat/chat.routes.js";
 
 const app = express();
 
@@ -47,12 +48,16 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // ── Global rate limiter ───────────────────────────────────────────
-// 100 request per 15 menit per IP untuk seluruh API
+// Default 600 request per 15 menit per IP untuk seluruh API (RATE_LIMIT_MAX).
+// Polling GET fitur Pesan dikecualikan: dibatasi per pengguna di chat.routes.js,
+// agar beberapa pengguna di satu jaringan (Wi-Fi kampus) tidak saling memblokir.
+const isChatPolling = (req) => req.method === "GET" && req.originalUrl.startsWith(`${API_PREFIX}/chat/`);
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: Number(process.env.RATE_LIMIT_MAX || 600),
   standardHeaders: true,
   legacyHeaders: false,
+  skip: isChatPolling,
   message: {
     success: false,
     message: "Terlalu banyak permintaan. Coba lagi dalam beberapa menit.",
@@ -108,6 +113,7 @@ app.use(`${API_PREFIX}/appointments`, appointmentsRoutes);
 app.use(`${API_PREFIX}/users`, usersRoutes);
 app.use(`${API_PREFIX}/admin`, adminRoutes);
 app.use(`${API_PREFIX}/queue`, queueRoutes);
+app.use(`${API_PREFIX}/chat`, chatRoutes);
 
 // ── 404 & Error handler (harus paling akhir) ──────────────────────
 app.use(notFound);

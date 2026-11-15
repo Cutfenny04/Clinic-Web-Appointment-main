@@ -327,3 +327,63 @@ describe("Foto profil dokter", () => {
     assert.equal(getDoctorPhotoUrl(null), null);
   });
 });
+
+describe("Fitur Pesan (/chat)", () => {
+  const CONV = "00000000-0000-4000-8000-0000000c0001";
+  const row = {
+    id: CONV, kind: "doctor", patient_id: U.patient.id, patient_name: "Pasien Uji", doctor_id: U.doctor.id,
+    doctor_name: "dr. Uji", doctor_specialty: "Umum", doctor_photo_path: null,
+    last_message_at: "2026-11-15T07:00:00Z", last_message: "Halo dok", last_sender_id: U.patient.id, unread_count: 2, can_send: true,
+  };
+  beforeEach(() => {
+    db.rpc.chat_list = () => ({ data: [row, { ...row, id: "00000000-0000-4000-8000-0000000c0002", kind: "admin", doctor_id: null, doctor_name: null, last_sender_id: U.admin.id }], error: null });
+    db.rpc.chat_start = ({ p_kind, p_other }) => (p_kind === "doctor" && p_other === U.doctor2.id
+      ? { data: null, error: { code: "P0030", message: "Chat dengan dokter hanya tersedia bila pasien pernah membuat janji temu dengan dokter tersebut." } }
+      : { data: CONV, error: null });
+    db.rpc.chat_send = ({ p_body }) => ({ data: { id: 7, body: p_body, created_at: "2026-11-15T07:01:00Z" }, error: null });
+    db.rpc.chat_history = () => ({ data: [{ id: 7, sender_id: U.doctor.id, sender_name: "dr. Uji", sender_role: "doctor", body: "Halo", created_at: "x" }], error: null });
+    db.rpc.chat_unread_total = () => ({ data: 3, error: null });
+  });
+
+  it("tanpa login → 401", async () => {
+    assert.equal((await req("/chat/conversations")).status, 401);
+    assert.equal((await req("/chat/unread")).status, 401);
+  });
+
+  it("pasien melihat nama dokter & 'Admin Klinik'; dokter melihat nama pasien", async () => {
+    const p = await req("/chat/conversations", { as: "patient" });
+    assert.equal(p.status, 200);
+    assert.deepEqual(p.body.data.map((c) => c.title), ["dr. Uji", "Admin Klinik"]);
+    assert.equal(p.body.data[0].last_message_mine, true);
+    assert.equal(p.body.data[0].unread_count, 2);
+    const d = await req("/chat/conversations", { as: "doctor" });
+    assert.equal(d.body.data[0].title, "Pasien Uji");
+  });
+
+  it("aturan database diteruskan dengan pesan Bahasa Indonesia (403)", async () => {
+    const r = await req("/chat/conversations", { as: "patient", method: "POST", body: { kind: "doctor", other_id: U.doctor2.id } });
+    assert.equal(r.status, 403);
+    assert.match(r.body.message, /pernah membuat janji temu/);
+  });
+
+  it("validasi: jenis salah, ID tidak valid, pesan kosong/terlalu panjang", async () => {
+    assert.equal((await req("/chat/conversations", { as: "patient", method: "POST", body: { kind: "grup" } })).status, 400);
+    assert.equal((await req("/chat/conversations", { as: "admin", method: "POST", body: { kind: "admin" } })).status, 400);
+    assert.equal((await req("/chat/conversations/bukan-uuid/messages", { as: "patient" })).status, 400);
+    const empty = await req(`/chat/conversations/${CONV}/messages`, { as: "patient", method: "POST", body: { body: "   " } });
+    assert.equal(empty.status, 400);
+    assert.match(empty.body.message, /tidak boleh kosong/);
+    const long = await req(`/chat/conversations/${CONV}/messages`, { as: "patient", method: "POST", body: { body: "x".repeat(2001) } });
+    assert.match(long.body.message, /maksimal 2000/);
+  });
+
+  it("kirim & ambil pesan memakai token pengguna (RPC), pesan dipangkas", async () => {
+    const s = await req(`/chat/conversations/${CONV}/messages`, { as: "patient", method: "POST", body: { body: "  Halo dok  " } });
+    assert.equal(s.status, 201);
+    assert.equal(calls.find((c) => c.rpc === "chat_send").args.p_body, "Halo dok");
+    const h = await req(`/chat/conversations/${CONV}/messages?after=5`, { as: "patient" });
+    assert.equal(h.body.data[0].mine, false);
+    assert.equal(calls.find((c) => c.rpc === "chat_history").args.p_after, 5);
+    assert.equal((await req("/chat/unread", { as: "patient" })).body.data.unread, 3);
+  });
+});

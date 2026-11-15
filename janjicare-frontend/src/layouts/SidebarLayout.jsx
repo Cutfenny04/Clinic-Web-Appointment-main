@@ -4,6 +4,7 @@ import Toast from "@/components/Toast";
 import Modal from "@/components/Modal";
 import { useAuth } from "@/contexts/AuthContext";
 import { BrandMark } from "@/components/Brand";
+import { apiService } from "@/services/api";
 
 // Ikon (path SVG) — gaya ikon lama dipertahankan
 const I = {
@@ -21,7 +22,23 @@ const I = {
   search: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
   plus: "M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z",
   ticket: "M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z",
+  chat: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
 };
+
+/** Jumlah pesan belum dibaca untuk badge menu "Pesan" (diperbarui berkala & saat pesan dibaca). */
+function useChatUnread(enabled) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!enabled) return undefined;
+    let alive = true;
+    const load = () => apiService.chat.unread().then((r) => alive && setN(r.data?.unread || 0)).catch(() => {});
+    load();
+    const id = setInterval(() => { if (document.visibilityState === "visible") load(); }, 20000);
+    window.addEventListener("chat:unread-changed", load);
+    return () => { alive = false; clearInterval(id); window.removeEventListener("chat:unread-changed", load); };
+  }, [enabled]);
+  return n;
+}
 
 // Menu sesuai spesifikasi per role (fitur tanpa backend disembunyikan — lihat docs/ROADMAP.md)
 const NAVIGATION = {
@@ -32,6 +49,7 @@ const NAVIGATION = {
     { name: "Jadwal Praktik", href: "/admin/schedules", icon: I.calendar },
     { name: "Janji Temu", href: "/admin/appointments", icon: I.clipboard },
     { name: "Antrean", href: "/admin/queue", icon: I.queue },
+    { name: "Pesan", href: "/admin/messages", icon: I.chat, badge: "chat" },
     { name: "Laporan", href: "/admin/reports", icon: I.report },
     { name: "Pengaturan", href: "/admin/settings", icon: I.settings },
   ],
@@ -42,6 +60,7 @@ const NAVIGATION = {
     { name: "Antrean Hari Ini", href: "/doctor/queue", icon: I.queue },
     { name: "Konsultasi", href: "/doctor/consultation", icon: I.stethoscope },
     { name: "Riwayat Pemeriksaan", href: "/doctor/history", icon: I.history },
+    { name: "Pesan", href: "/doctor/messages", icon: I.chat, badge: "chat" },
     { name: "Profil Saya", href: "/doctor/profile", icon: I.user },
   ],
   patient: [
@@ -51,6 +70,7 @@ const NAVIGATION = {
     { name: "Janji Temu Saya", href: "/patient/appointments", icon: I.clipboard },
     { name: "Nomor Antrean", href: "/patient/queue", icon: I.ticket },
     { name: "Riwayat Konsultasi", href: "/patient/history", icon: I.history },
+    { name: "Pesan", href: "/patient/messages", icon: I.chat, badge: "chat" },
     { name: "Profil Saya", href: "/patient/profile", icon: I.user },
   ],
 };
@@ -109,6 +129,7 @@ export default function SidebarLayout({ header: _header, children }) {
   const isVisuallyCollapsed = isCollapsed && !sidebarOpen;
 
   const links = NAVIGATION[role] || [];
+  const chatUnread = useChatUnread(Boolean(role));
 
   const roleLabels = {
     admin: "Admin",
@@ -199,6 +220,12 @@ export default function SidebarLayout({ header: _header, children }) {
                 <span className={`whitespace-nowrap transition-opacity duration-300 ${isVisuallyCollapsed ? "opacity-0 w-0 hidden" : "opacity-100"}`}>
                   {item.name}
                 </span>
+                {item.badge === "chat" && chatUnread > 0 && (
+                  <span className={`${isVisuallyCollapsed ? "absolute top-1.5 right-2" : "ml-auto"} min-w-[1.25rem] h-5 px-1.5 rounded-full bg-plum text-white dark:bg-heather dark:text-ink text-[11px] font-bold flex items-center justify-center`}
+                    aria-label={`${chatUnread} pesan belum dibaca`} data-testid="chat-unread-badge">
+                    {chatUnread > 99 ? "99+" : chatUnread}
+                  </span>
+                )}
               </Link>
             );
           })}

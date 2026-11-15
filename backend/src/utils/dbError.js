@@ -16,6 +16,8 @@ const STATUS_BY_CODE = {
   P0020: 409, // transisi status tidak valid
   P0021: 400, // aturan pembatalan/check-in
   P0022: 409, // masih ada pemeriksaan berjalan
+  P0030: 403, // aturan chat (mis. belum pernah janji temu dengan dokter)
+  P0031: 400, // isi pesan tidak valid
   42501: 403, // permission denied / RLS
 };
 

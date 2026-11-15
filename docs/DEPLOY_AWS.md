@@ -171,7 +171,8 @@ set -a; source /opt/janjicare/config/gotrue.env; set +a
 
 # 3) skema JanjiCare + akses service_role
 for f in backend/sql/01_schema_and_rls.sql backend/sql/02_security_status_queue.sql \
-         backend/sql/03_doctor_photos.sql deploy/aws/rds/99_service_role_policies.sql; do
+         backend/sql/03_doctor_photos.sql backend/sql/04_chat.sql \
+         deploy/aws/rds/99_service_role_policies.sql; do
   psql "$DB" -v ON_ERROR_STOP=1 -f "$f"
 done
 
@@ -281,6 +282,16 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-c
 2. EC2 menyala lagi dengan sendirinya, dan PM2 menjalankan ulang semua proses. Elastic IP membuat alamat origin CloudFront tetap sama.
 3. Bila RDS sempat di-stop: RDS → Actions → **Start**. Tunggu *Available*, lalu `pm2 restart all` di kedua EC2.
 4. Memperbarui kode: `cd /opt/janjicare/app && git pull && (cd backend && npm ci --omit=dev) && pm2 restart all`, lalu jalankan ulang `deploy-frontend.sh` bila frontend berubah.
+5. Bila pembaruan membawa berkas SQL baru (misalnya `backend/sql/04_chat.sql` untuk fitur Pesan), jalankan berkas itu **lalu ulangi** `99_service_role_policies.sql` agar tabel baru juga bisa diakses backend:
+
+   ```bash
+   cd /opt/janjicare/app
+   export PGHOST=<endpoint-rds> PGPORT=5432 PGDATABASE=janjicare PGUSER=postgres PGSSLMODE=require
+   read -rsp "Password master RDS: " PGPASSWORD; export PGPASSWORD; echo
+   psql -v ON_ERROR_STOP=1 -f backend/sql/04_chat.sql -f deploy/aws/rds/99_service_role_policies.sql
+   ```
+
+   Kedua berkas aman dijalankan berulang kali dan tidak menghapus data.
 
 ---
 

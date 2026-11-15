@@ -12,6 +12,7 @@
    - `backend/sql/01_schema_and_rls.sql`
    - `backend/sql/02_security_status_queue.sql`
    - `backend/sql/03_doctor_photos.sql` — kolom foto dokter + bucket Storage `doctor-photos` (publik, maks 2 MB, JPEG/PNG/WebP) dan policy-nya
+   - `backend/sql/04_chat.sql` — fitur Pesan (chat pasien ↔ dokter/admin)
 
    Ketiganya aman dijalankan ulang dan tidak menghapus data. Jika SQL Editor menampilkan NOTICE
    "Tidak dapat membuat policy storage.objects", bucket tetap aman (pengguna biasa tidak bisa menulis);

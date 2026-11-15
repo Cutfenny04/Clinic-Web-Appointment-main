@@ -233,7 +233,25 @@ Queue Microservice (`:3002/api/v1/queue`) bersifat **internal** dan mewajibkan h
 
 ---
 
-## 5. Queue Microservice Endpoints (Port 3002)
+## 5. Chat Endpoints (`/chat`)
+
+Semua endpoint membutuhkan `Authorization: Bearer <token>`. Aturan lengkap: `docs/FITUR_PESAN.md`.
+
+| Endpoint | Method | Deskripsi |
+|---|---|---|
+| `/chat/conversations` | `GET` | Daftar percakapan saya + `unread_count` |
+| `/chat/unread` | `GET` | Total pesan belum dibaca (`{ unread }`) |
+| `/chat/contacts?search=` | `GET` | Kontak yang boleh dihubungi (pasien: dokter yang pernah ditemui; dokter: pasiennya; admin: semua pasien) |
+| `/chat/conversations` | `POST` | Buka/buat percakapan. Body: `{ "kind": "doctor" \| "admin", "other_id": "<uuid>" }` |
+| `/chat/conversations/:id/messages?after=<id>` | `GET` | Pesan setelah id tertentu |
+| `/chat/conversations/:id/messages` | `POST` | Kirim pesan. Body: `{ "body": "..." }` (1–2000 karakter, maks 30/menit) |
+| `/chat/conversations/:id/read` | `POST` | Tandai sudah dibaca |
+
+Status: `403` tidak berhak, `404` percakapan bukan milik Anda, `400` input tidak valid, `429` terlalu banyak pesan.
+
+---
+
+## 6. Queue Microservice Endpoints (Port 3002)
 
 Prefix URL: `http://localhost:3002/api/v1/queue`
 

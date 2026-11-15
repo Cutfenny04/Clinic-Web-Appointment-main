@@ -68,6 +68,8 @@ describe("Database: RLS, booking atomik, status, antrean", { skip: !DB_URL && "T
     await pool.query(sql("../../sql/02_security_status_queue.sql"));
     await pool.query(sql("../../sql/03_doctor_photos.sql"));
     await pool.query(sql("../../sql/03_doctor_photos.sql")); // idempotent
+    await pool.query(sql("../../sql/04_chat.sql"));
+    await pool.query(sql("../../sql/04_chat.sql")); // idempotent
     ids.admin = await newUser("admin@test.id", "Admin", "admin");
     ids.doctor = await newUser("dokter@test.id", "dr. Uji", "doctor");
     ids.doctor2 = await newUser("dokter2@test.id", "dr. Lain", "doctor");
@@ -258,5 +260,98 @@ describe("Database: RLS, booking atomik, status, antrean", { skip: !DB_URL && "T
     } finally { c.release(); }
     const del = await as(ids.p1, (cl) => cl.query("DELETE FROM storage.objects WHERE bucket_id='doctor-photos'").then((r) => r.rowCount));
     assert.equal(del, 0);
+  });
+  describe("Fitur Pesan (04_chat.sql)", () => {
+    const start = (uid, kind, other = null) =>
+      as(uid, (c) => c.query("SELECT public.chat_start($1,$2) AS id", [kind, other]).then((r) => r.rows[0].id));
+    const send = (uid, conv, body) =>
+      as(uid, (c) => c.query("SELECT (public.chat_send($1,$2)).id AS id", [conv, body]).then((r) => r.rows[0].id));
+    const list = (uid) => as(uid, (c) => c.query("SELECT * FROM public.chat_list()").then((r) => r.rows));
+    const history = (uid, conv, after = 0) =>
+      as(uid, (c) => c.query("SELECT * FROM public.chat_history($1,$2)", [conv, after]).then((r) => r.rows));
+    let p3, p4, convDoc, convAdmin;
+
+    before(async () => {
+      p3 = await newUser("chat-p3@test.id", "Pasien Tiga", "patient");
+      p4 = await newUser("chat-p4@test.id", "Pasien Empat", "patient");
+      const s = await schedule(ids.doctor2, 3, "09:00", "11:00", 5);
+      await book(p3, p3, s);                       // p3 punya janji temu dengan doctor2
+      const r4 = await book(p4, p4, s);            // p4 janji temu lalu dibatalkan
+      await move(p4, r4.id, "cancelled");
+    });
+
+    it("pasien hanya bisa chat dokter yang pernah ditemui (janji temu tidak dibatalkan)", async () => {
+      convDoc = await start(p3, "doctor", ids.doctor2);
+      assert.ok(convDoc);
+      assert.equal(await start(p3, "doctor", ids.doctor2), convDoc, "percakapan yang sama dipakai ulang");
+      await assert.rejects(start(p3, "doctor", ids.doctor), /pernah membuat janji temu/);
+      await assert.rejects(start(p4, "doctor", ids.doctor2), /pernah membuat janji temu/, "janji temu dibatalkan tidak dihitung");
+    });
+
+    it("dokter boleh memulai chat hanya dengan pasiennya sendiri", async () => {
+      assert.equal(await start(ids.doctor2, "doctor", p3), convDoc);
+      await assert.rejects(start(ids.doctor2, "doctor", p4), /pernah membuat janji temu/);
+      await assert.rejects(start(ids.doctor2, "admin", p3), /tidak memakai kotak masuk admin/);
+    });
+
+    it("pesan dua arah, urut, dan hitungan belum dibaca", async () => {
+      await send(p3, convDoc, "  Dok, masih pusing setelah minum obat  ");
+      await send(ids.doctor2, convDoc, "Minum air yang cukup dan istirahat.");
+      const h = await history(p3, convDoc);
+      assert.deepEqual(h.map((m) => m.body), ["Dok, masih pusing setelah minum obat", "Minum air yang cukup dan istirahat."]);
+      assert.equal(h[1].sender_role, "doctor");
+      const after = await history(p3, convDoc, h[0].id);
+      assert.equal(after.length, 1, "polling hanya mengambil pesan baru");
+      const lp = (await list(p3)).find((c) => c.id === convDoc);
+      assert.equal(lp.unread_count, 1);
+      assert.equal(lp.doctor_name, "dr. Lain");
+      await as(p3, (c) => c.query("SELECT public.chat_mark_read($1)", [convDoc]));
+      assert.equal((await list(p3)).find((c) => c.id === convDoc).unread_count, 0);
+      assert.equal(await as(ids.doctor2, (c) => c.query("SELECT public.chat_unread_total() n").then((r) => r.rows[0].n)), 0);
+    });
+
+    it("privasi: admin, dokter lain, dan pasien lain tidak bisa membaca chat dokter–pasien", async () => {
+      for (const uid of [ids.admin, ids.doctor, p4]) {
+        await assert.rejects(history(uid, convDoc), /tidak ditemukan/);
+        await assert.rejects(send(uid, convDoc, "halo"), /tidak ditemukan/);
+        assert.equal((await list(uid)).some((c) => c.id === convDoc), false);
+        const direct = await as(uid, (c) => c.query("SELECT count(*)::int n FROM public.chat_messages WHERE conversation_id=$1", [convDoc]));
+        assert.equal(direct.rows[0].n, 0, "RLS menyembunyikan baris");
+      }
+      await assert.rejects(start(ids.admin, "doctor", p3), /Admin tidak dapat/);
+    });
+
+    it("kotak masuk admin: pasien atau admin memulai, semua admin melihat, dokter tidak", async () => {
+      convAdmin = await start(p4, "admin");
+      assert.equal(await start(ids.admin, "admin", p4), convAdmin);
+      await send(p4, convAdmin, "Dokter anak praktik hari apa?");
+      const admin2 = await newUser("chat-admin2@test.id", "Admin Dua", "admin");
+      assert.equal((await list(admin2)).find((c) => c.id === convAdmin).unread_count, 1);
+      await send(admin2, convAdmin, "Senin dan Kamis pagi.");
+      assert.equal((await list(ids.admin)).find((c) => c.id === convAdmin).unread_count, 2, "penanda baca per admin");
+      await assert.rejects(history(ids.doctor2, convAdmin), /tidak ditemukan/);
+      // pasien tidak bisa membuka kotak masuk admin milik pasien lain: p_other diabaikan → tetap percakapannya sendiri
+      assert.equal(await start(p4, "admin", p3), convAdmin);
+    });
+
+    it("tulis langsung ke tabel ditolak; isi pesan divalidasi", async () => {
+      await assert.rejects(
+        as(p3, (c) => c.query("INSERT INTO public.chat_messages (conversation_id, sender_id, body) VALUES ($1,$2,'x')", [convDoc, p3])),
+        /permission denied|row-level security/
+      );
+      await assert.rejects(
+        as(p3, (c) => c.query("INSERT INTO public.chat_conversations (kind, patient_id) VALUES ('admin',$1)", [p3])),
+        /permission denied|row-level security/
+      );
+      await assert.rejects(send(p3, convDoc, "   "), /tidak boleh kosong/);
+      await assert.rejects(send(p3, convDoc, "x".repeat(2001)), /maksimal 2000/);
+      await assert.rejects(as(null, (c) => c.query("SET LOCAL ROLE anon").then(() => c.query("SELECT public.chat_list()"))), /permission denied/);
+    });
+
+    it("tabel lama tidak berubah: alur booking tetap jalan setelah migrasi 04", async () => {
+      const s2 = await schedule(ids.doctor2, 4, "13:00", "14:00", 2);
+      const r = await book(p4, p4, s2);
+      assert.ok(r);
+    });
   });
 });

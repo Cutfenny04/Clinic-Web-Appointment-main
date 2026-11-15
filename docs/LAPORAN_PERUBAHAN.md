@@ -123,7 +123,7 @@ Backend mengunggah dengan service role **setelah** memeriksa role admin; policy 
 
 ### Foto
 Potret yang dipakai adalah **ilustrasi orisinal** (`scripts/generate-doctor-portraits.py`) untuk dokter fiktif, berlatar klinik seragam.
-Foto di `janjicare-frontend/public/image/` (andi.jpg, nadia.jpg, dst.) **tidak dipakai**: foto tersebut tampak sebagai foto orang sungguhan, bukan hasil AI atau aset berlisensi.
+Pembaruan: atas keputusan tim, foto fiktif di `janjicare-frontend/public/image/` (andi.jpg, nadia.jpg, dst.) dipakai lewat `node scripts/seed-doctors.js --foto ../janjicare-frontend/public/image --ganti-foto`.
 
 ### Hasil pengujian
 | Uji | Hasil |
@@ -136,3 +136,27 @@ Foto di `janjicare-frontend/public/image/` (andi.jpg, nadia.jpg, dst.) **tidak d
 | Regresi: aksi admin/dokter/pasien | **61/61** |
 
 E2E dijalankan di stack lokal (GoTrue + PostgREST + PostgreSQL 16 + emulator Storage sederhana). **Belum diuji langsung terhadap Supabase Storage asli** — jalankan migrasi 03 di proyek Supabase Anda lalu `node scripts/seed-doctors.js --foto`.
+
+---
+
+## Pembaruan 15 November 2026 — Fitur Pesan (chat)
+
+Chat teks pasien ↔ dokter dan pasien ↔ admin, tanpa mengubah alur booking/antrean. Detail: `docs/FITUR_PESAN.md`.
+
+| Keputusan tim | Penerapan |
+|---|---|
+| Chat dokter hanya bila pernah punya janji temu | `chat_has_relationship()` — janji temu berstatus selain `cancelled`, diperiksa saat membuka dan setiap mengirim pesan |
+| Siapa saja boleh memulai | `chat_start` untuk pasien, dokter, admin |
+| Admin tidak perlu tahu chat dokter–pasien | RLS + `chat_can_access()`; admin mendapat 404 bila mencoba membuka |
+| Kotak masuk admin bersama | Satu percakapan admin per pasien; status baca per admin (`chat_reads`) |
+
+Temuan saat pengujian: limiter global 600 request/15 menit per IP habis oleh polling chat bila beberapa tab/pengguna memakai jaringan yang sama, sehingga seluruh website membalas 429. Polling GET chat kini dibatasi per pengguna.
+
+| Uji | Hasil |
+|---|---|
+| Backend `npm test` (dengan `TEST_DATABASE_URL`) | **78/78** (7 tes DB + 5 tes API chat baru) |
+| Frontend `vite build` | berhasil |
+| E2E fitur Pesan (Playwright) | **19/19**, tanpa error konsol |
+| Regresi: aksi admin/dokter/pasien | **61/61** |
+| Regresi: crawler semua halaman | 0 temuan |
+| Migrasi 04 + 99 di emulasi RDS (master non-superuser), dua kali | berhasil (idempoten) |
